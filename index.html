@@ -169,7 +169,7 @@
 	</section>
 	<section id="loadingScreen" class="loading-screen hidden" aria-label="Loading your training plan"><div class="loading-content"><div class="dumbbell" aria-hidden="true"><span class="dumbbell-weight left"></span><span class="dumbbell-grip left"></span><span class="dumbbell-bar"></span><span class="dumbbell-grip right"></span><span class="dumbbell-weight right"></span></div><div class="loading-label">Loading your training</div></div></section>
 
-	<div id="app" class="app-shell hidden">
+		window.addEventListener('pagehide',()=>{ save(); saveCoach(); syncRemoteState(); });
 			<aside class="sidebar"><div class="brand" id="appBrand"><div class="brand-mark">S</div><div class="brand-name">Smart Gym</div></div><div class="nav-label">Workspace</div><nav class="nav"><button class="active" data-view="dashboard"><span class="nav-icon">⌂</span> Overview</button><button id="manualNav" data-view="manual"><span class="nav-icon">▤</span> Manual System</button><button id="manualWorkoutNav" data-view="manualWorkout"><span class="nav-icon">▣</span> Manual Workout</button><button id="coachMembersNav" data-view="coachMembers" class="hidden"><span class="nav-icon">＋</span> Add Member</button><button id="painMapNav" data-view="painMap"><span class="nav-icon">◉</span> Body PainMap</button><button id="painMapHistoryNav" data-view="painMapHistory"><span class="nav-icon">◫</span> PainMap History</button><button id="historyNav" data-view="history"><span class="nav-icon">◫</span> History</button><button id="attendanceNav" data-view="attendance"><span class="nav-icon">✓</span> Attendance</button></nav><div class="sidebar-bottom">MEMBER STATUS<br><strong style="color:#fff">● ACTIVE</strong><span class="admin-link" id="adminOpen">Manage participants →</span></div></aside>
 		<main><header class="topbar"><div class="breadcrumb">Smart Gym / <b id="crumb">Overview</b></div><div class="top-actions"><button class="primary-btn hidden" id="coachManage">EDIT ALL TRAINING</button><button class="icon-btn" title="Notifications">♧</button><div id="userAvatar" class="avatar">AM</div></div></header>
 			<div id="dashboardView" class="page"><div class="welcome"><div><div class="eyebrow">Member dashboard</div><h1><span id="greeting">Good morning,</span> <span id="memberFirst">Member.</span></h1></div><div class="date" id="today"></div></div>
@@ -715,12 +715,13 @@ function normalizeCode(value){ const digits=String(value ?? '').replace(/\D/g,''
 		}
 		function getManualWorkoutHistory(){
 			try {
-				const saved=JSON.parse(localStorage.getItem(manualWorkoutHistoryKey) || 'null');
+				const saved=JSON.parse(localStorage.getItem(manualWorkoutHistoryKey) || localStorage.getItem(manualWorkoutHistoryKey+'Backup') || 'null');
 				return Array.isArray(saved) ? saved : [];
 			} catch(error) { return []; }
 		}
 		function saveManualWorkoutHistory(entries, sync=false){
-			try { localStorage.setItem(manualWorkoutHistoryKey, JSON.stringify(entries)); } catch(error) {}
+			markLocalChange();
+			try { const serialized=JSON.stringify(entries); localStorage.setItem(manualWorkoutHistoryKey, serialized); localStorage.setItem(manualWorkoutHistoryKey+'Backup', serialized); } catch(error) {}
 			if(sync) queueRemoteSync();
 		}
 		let dashboardWorkoutSaveTimer=null;
@@ -752,6 +753,7 @@ function normalizeCode(value){ const digits=String(value ?? '').replace(/\D/g,''
 			});
 			const historySerialized=JSON.stringify(workoutHistory);
 			try { localStorage.setItem(historyKey,historySerialized); localStorage.setItem(historyBackupKey,historySerialized); } catch(error) {}
+			markLocalChange();
 			persist(storageKey,backupKey,participants);
 			queueRemoteSync();
 			if($('dashboardWorkoutSaveStatus')) $('dashboardWorkoutSaveStatus').textContent='Saved just now';
@@ -925,21 +927,16 @@ function normalizeCode(value){ const digits=String(value ?? '').replace(/\D/g,''
 				else if(isCoach){ localStorage.setItem('smartGymHistorySelectedPlayer', 'all'); }
 			}
 			if(!entries.length){ list.innerHTML='<div style="padding:28px;text-align:center;color:#5f6368">No sessions saved for this date.</div>'; return; }
-			list.innerHTML = entries.map(entry => `
-				<div class="panel" style="padding:18px 20px;margin-bottom:14px;border:1px solid #e7e3df;border-radius:12px;background:#fff">
-					<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px">
-						<div><strong style="display:block;font-size:15px;color:#111315">${sheetEscape(entry.playerName)}</strong><span style="font-size:11px;color:#5f6368;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(entry.exercise)}</span></div>
-						<span style="padding:6px 10px;border-radius:999px;background:#f4f3f1;color:#111315;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(entry.date)}</span>
-					</div>
-					<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;font-size:12px;color:#3d4043">
-						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Focus</strong>${sheetEscape(entry.primaryFocus || '—')}</div>
-						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Sets</strong>${sheetEscape(entry.sets || '—')}</div>
-						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Reps</strong>${sheetEscape(entry.reps || '—')}</div>
-						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Weight</strong>${sheetEscape(entry.weight || '—')}</div>
-					</div>
-					${entry.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #efeae6;color:#3d4043;font-size:12px"><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Notes</strong>${sheetEscape(entry.notes)}</div>` : ''}
-					${isCoach ? `<button type="button" class="manual-mini-btn secondary" data-remove-history="${sheetEscape(entry.id)}" style="margin-top:14px">Remove entry</button>` : ''}
-				</div>
+			const sessions={};
+			entries.forEach(entry=>{ const key=`${entry.playerCode}|${entry.date}`; if(!sessions[key]) sessions[key]={playerName:entry.playerName,date:entry.date,entries:[]}; sessions[key].entries.push(entry); });
+			list.innerHTML = Object.values(sessions).map(session => `
+				<details class="panel" style="padding:0;margin-bottom:14px;border:1px solid #e7e3df;border-radius:12px;background:#fff;overflow:hidden">
+					<summary style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:18px 20px;cursor:pointer;list-style:none">
+						<div><strong style="display:block;font-size:15px;color:#111315">${sheetEscape(session.playerName)}</strong><span style="font-size:11px;color:#5f6368;letter-spacing:.08em;text-transform:uppercase">${session.entries.length} exercise${session.entries.length===1?'':'s'} · Open full workout</span></div>
+						<span style="padding:6px 10px;border-radius:999px;background:#f4f3f1;color:#111315;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(session.date)}</span>
+					</summary>
+					<div style="padding:0 20px 18px;border-top:1px solid #efeae6">${session.entries.map(entry => `<div style="padding:14px 0;border-bottom:1px solid #f0eeeb"><strong style="display:block;color:#111315">${sheetEscape(entry.exercise)}</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:8px;font-size:12px;color:#3d4043"><span>Focus: ${sheetEscape(entry.primaryFocus || '—')}</span><span>Sets: ${sheetEscape(entry.sets || '—')}</span><span>Reps: ${sheetEscape(entry.reps || '—')}</span><span>Weights: ${sheetEscape(entry.weight || '—')}</span></div>${entry.notes ? `<div style="margin-top:8px;color:#5f6368;font-size:12px">${sheetEscape(entry.notes)}</div>` : ''}${isCoach ? `<button type="button" class="manual-mini-btn secondary" data-remove-history="${sheetEscape(entry.id)}" style="margin-top:10px">Remove entry</button>` : ''}</div>`).join('')}</div>
+				</details>
 			`).join('');
 			list.querySelectorAll('[data-remove-history]').forEach(button=>button.onclick=()=>removeManualWorkoutHistoryEntry(button.dataset.removeHistory));
 		}
