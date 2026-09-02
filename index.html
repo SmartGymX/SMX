@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Smart Gym | Train with internet</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+		:root { --ink:#0c0d0e; --paper:#f3f3f1; --muted:#818487; --line:#d9d9d6; --red:#e52f37; --red-dark:#bd2027; --white:#fff; --shadow:0 20px 55px rgba(14,15,16,.08); }
+		* { box-sizing:border-box; }
+		html { scroll-behavior:smooth; }
+		body { margin:0; background:var(--paper); color:var(--ink); font-family:'DM Sans',sans-serif; font-size:14px; }
+		button, input, select { font:inherit; }
+		button { cursor:pointer; border:0; }
+		.app-shell { min-height:100vh; display:grid; grid-template-columns:248px 1fr; }
+		.sidebar { background:var(--ink); color:#fff; padding:28px 20px; display:flex; flex-direction:column; position:fixed; inset:0 auto 0 0; width:248px; z-index:3; }
+		.brand { display:flex; align-items:center; gap:11px; margin:0 8px 65px; color:#fff; }
+		.brand-mark { width:29px; height:29px; background:var(--red); display:grid; place-items:center; transform:skew(-12deg); font-family:'Barlow Condensed'; font-size:20px; font-weight:800; }
+		.brand-name { font-family:'Barlow Condensed'; font-size:27px; text-transform:uppercase; letter-spacing:.5px; }
+		.eyebrow { color:var(--red); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.9px; }
+		.nav-label { color:#777a7d; margin:0 12px 14px; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+		.nav { display:grid; gap:6px; }
+		.nav button { display:flex; align-items:center; gap:13px; background:transparent; color:#9fa1a4; padding:13px 12px; text-align:left; border-left:2px solid transparent; transition:.2s; }
+		.nav button:hover, .nav button.active { color:#fff; background:#18191b; border-left-color:var(--red); }
+		.nav-icon { width:18px; text-align:center; font-size:17px; }
+		.sidebar-bottom { margin-top:auto; border-top:1px solid #292a2b; padding:20px 10px 3px; color:#85888b; font-size:12px; line-height:1.5; }
+		.admin-link { display:block; color:#fff; margin-top:9px; text-decoration:underline; text-decoration-color:var(--red); text-underline-offset:3px; cursor:pointer; }
+		main { grid-column:2; min-width:0; }
+		.topbar { height:82px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 clamp(22px,4vw,60px); background:rgba(243,243,241,.88); position:sticky; top:0; z-index:2; backdrop-filter:blur(14px); }
+		.breadcrumb { color:var(--muted); font-size:12px; } .breadcrumb b { color:var(--ink); }
+		.top-actions { display:flex; align-items:center; gap:23px; }
+		.icon-btn { background:transparent; font-size:19px; color:#555; transition:.2s; } .icon-btn:hover { color:var(--red); transform:translateY(-2px); }
+		.avatar { width:36px; height:36px; background:var(--ink); color:#fff; display:grid; place-items:center; border-radius:50%; font-weight:700; font-size:12px; }
+		.page { padding:48px clamp(22px,4vw,60px) 70px; max-width:1400px; }
+		.welcome { display:flex; align-items:end; justify-content:space-between; gap:30px; margin-bottom:37px; }
+		h1,h2,h3 { margin:0; font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; letter-spacing:.2px; }
+		h1 { font-size:clamp(42px,5vw,67px); line-height:.95; max-width:620px; } h1 span { color:var(--red); }
+		.date { color:var(--muted); font-size:12px; border-left:2px solid var(--red); padding-left:12px; line-height:1.5; }
+		.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:28px; }
+		.stat { background:#fff; border:1px solid #e5e5e2; padding:20px 21px; min-height:115px; transition:.2s; } .stat:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+		.stat-top { display:flex; justify-content:space-between; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:1px; } .stat-icon { color:var(--red); font-size:16px; }
+		.stat strong { display:block; font-family:'Barlow Condensed'; font-size:39px; margin-top:13px; } .stat small { font-family:'DM Sans'; font-size:12px; font-weight:500; color:var(--muted); }
+		.dashboard-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(280px,.7fr); gap:14px; }
+		.panel { background:#fff; border:1px solid #e2e2df; padding:25px; } .panel-head { display:flex; align-items:start; justify-content:space-between; gap:15px; margin-bottom:24px; } .panel h2 { font-size:26px; }
+		.work-panel { position:relative; overflow:hidden; } .work-panel:before { content:''; position:absolute; width:180px; height:180px; right:-65px; top:-80px; background:radial-gradient(circle, #e52f3740 0%, #e52f3712 34%, transparent 70%); animation:work-light 3.6s ease-in-out infinite; pointer-events:none; } .work-panel > * { position:relative; z-index:1; } .work-motto { color:var(--ink); font-family:'Barlow Condensed',sans-serif; font-size:34px; line-height:.9; letter-spacing:.6px; text-transform:uppercase; } .work-motto span { color:var(--red); text-shadow:0 0 15px #e52f3766; } @keyframes work-light { 0%,100% { opacity:.45; transform:translate(0,0) scale(.9); } 50% { opacity:1; transform:translate(-12px,10px) scale(1.08); } }
+		.panel-sub { color:var(--muted); font-size:12px; margin-top:5px; } .view-link { color:var(--red-dark); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+		.session-row { border-top:1px solid var(--line); padding:17px 0; display:grid; grid-template-columns:1fr 92px 95px; gap:12px; align-items:center; }
+		.session-row:first-of-type { border-top:0; } .exercise { font-weight:700; } .exercise span { display:block; color:var(--muted); font-size:11px; font-weight:400; margin-top:4px; } .metric { font-weight:700; text-align:right; } .metric span { display:block; color:var(--muted); font-size:10px; font-weight:400; text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px; }
+		.set-list { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; } .set-chip { background:#f1f1ef; color:#555; padding:4px 7px; font-size:10px; font-weight:700; } .set-chip b { color:var(--red-dark); }
+		.weight-log { margin-top:25px; padding-top:24px; border-top:1px solid var(--line); } .weight-log-head { display:flex; justify-content:space-between; align-items:end; gap:18px; margin-bottom:16px; } .weight-log h3 { font-size:24px; } .weight-log-copy { color:var(--muted); font-size:12px; margin-top:5px; } .weight-stats { display:flex; gap:10px; flex-wrap:wrap; } .weight-stat { background:#f7f7f5; border:1px solid #e5e5e1; padding:10px 13px; min-width:105px; } .weight-stat span { display:block; color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:1px; } .weight-stat strong { display:block; font-family:'Barlow Condensed'; font-size:25px; margin-top:3px; } .weight-entry { display:grid; grid-template-columns:minmax(150px,1fr) 2fr; gap:15px; align-items:center; border-top:1px solid #e8e8e5; padding:14px 0; } .weight-entry-name { font-weight:700; } .weight-entry-name span { display:block; color:var(--muted); font-size:11px; font-weight:400; margin-top:3px; } .weight-inputs { display:flex; flex-wrap:wrap; gap:8px; } .weight-input { width:78px; margin:0; padding:9px 8px; } .weight-input-label { color:var(--muted); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+		.attendance-head { display:flex; justify-content:space-between; align-items:end; gap:20px; margin-bottom:25px; } .attendance-head h2 { font-size:32px; } .attendance-copy { color:var(--muted); font-size:12px; margin-top:5px; } .attendance-stats { display:flex; gap:10px; } .attendance-stat { background:#f7f7f5; border:1px solid #e5e5e1; padding:10px 15px; text-align:center; } .attendance-stat span { display:block; color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:1px; } .attendance-stat strong { display:block; font-family:'Barlow Condensed'; font-size:27px; margin-top:2px; } .calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; } .calendar-label { color:var(--muted); font-size:10px; font-weight:700; text-align:center; text-transform:uppercase; letter-spacing:1px; padding-bottom:6px; } .day-toggle { min-height:78px; background:#f7f7f5; border:1px solid #e3e3df; color:var(--ink); padding:12px 8px; text-align:left; transition:.2s; } .day-toggle:hover { border-color:var(--red); transform:translateY(-2px); } .day-toggle.current-week { box-shadow:inset 0 -3px 0 var(--red); } .day-toggle.attended { background:var(--red); border-color:var(--red); color:#fff; } .day-toggle:disabled { visibility:hidden; } .day-number { display:block; font-family:'Barlow Condensed'; font-size:25px; } .day-status { display:block; font-size:9px; font-weight:700; margin-top:7px; text-transform:uppercase; letter-spacing:.5px; }
+		.coach-attendance-list { display:grid; gap:0; } .coach-attendance-row { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); padding:16px 4px; font-weight:700; } .coach-attendance-row:first-child { border-top:0; } .coach-attendance-row strong { color:var(--red-dark); font-family:'Barlow Condensed'; font-size:27px; }
+		.edit-btn { background:#f1f1ef; color:#555; padding:8px 10px; font-size:11px; font-weight:700; transition:.2s; } .edit-btn:hover { background:var(--red); color:#fff; }
+		.focus-panel { background:var(--ink); color:#fff; border-color:var(--ink); position:relative; overflow:hidden; } .focus-panel:after { content:'S'; position:absolute; font-family:'Barlow Condensed'; font-size:220px; font-weight:800; color:#17191a; right:-20px; bottom:-70px; line-height:1; pointer-events:none; }
+		.focus-panel > * { position:relative; z-index:1; } .focus-panel .panel-sub { color:#96999b; } .focus-title { font-size:46px; line-height:.9; margin:43px 0 20px; max-width:190px; } .focus-title span { color:var(--red); }
+		.progress-label { display:flex; justify-content:space-between; color:#aaa; font-size:11px; margin-top:25px; } .progress { height:5px; background:#363839; margin-top:8px; } .progress i { display:block; height:100%; width:68%; background:var(--red); }
+		.primary-btn { background:var(--red); color:#fff; padding:13px 18px; font-size:12px; font-weight:700; letter-spacing:.5px; transition:.2s; } .primary-btn:hover { background:var(--red-dark); transform:translateY(-2px); box-shadow:0 8px 18px #e52f3733; }
+		.quote { margin-top:14px; background:#e8e8e5; padding:20px; font-family:'Barlow Condensed'; font-size:21px; line-height:1.05; text-transform:uppercase; } .quote small { font-family:'DM Sans'; display:block; color:var(--muted); font-size:10px; margin-top:13px; text-transform:none; }
+		.hidden { display:none !important; }
+		.login-screen { min-height:100vh; background:var(--ink); color:#fff; display:grid; place-items:center; padding:25px; position:relative; overflow:visible; } .login-screen:before { content:'SMART\A GYM'; white-space:pre; position:absolute; font-family:'Barlow Condensed'; font-size:clamp(130px,22vw,320px); line-height:.75; font-weight:800; color:#151718; left:-10%; bottom:-8%; pointer-events:none; opacity:.95; }
+		.login-box { width:min(450px,100%); position:relative; z-index:1; } .login-brand { margin:0 0 70px; } .login-box h1 { font-size:58px; margin:16px 0; } .login-copy { color:#94979a; line-height:1.6; max-width:350px; margin-bottom:32px; }
+		.code-field { display:flex; border-bottom:1px solid #505254; padding-bottom:10px; margin-bottom:22px; } .code-field span { color:var(--red); font-family:'Barlow Condensed'; font-size:27px; } .code-field input { flex:1; min-width:0; border:0; outline:0; background:transparent; color:#fff; font-family:'Barlow Condensed'; font-size:28px; letter-spacing:2px; padding-left:10px; } .code-field input::placeholder { color:#55585a; }
+		.login-note { color:#6d7072; font-size:11px; margin-top:20px; } .login-note b { color:#b8babc; }
+		.modal-wrap { position:fixed; inset:0; background:#0c0d0ecc; display:grid; place-items:center; z-index:5; padding:20px; } .modal { width:min(560px,100%); background:#fff; padding:28px; box-shadow:0 25px 80px #0008; max-height:90vh; overflow:auto; } .modal-head { display:flex; justify-content:space-between; margin-bottom:22px; } .close { background:transparent; font-size:22px; color:#777; } .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; } label { color:#6d7072; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; } input, select { width:100%; margin-top:7px; border:1px solid var(--line); background:#fafaf8; padding:12px; outline:none; } input:focus, select:focus { border-color:var(--red); } .full { grid-column:1/-1; } .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; } .secondary-btn { background:#ececea; padding:12px 17px; font-weight:700; color:#555; }
+		.admin-table { width:100%; border-collapse:collapse; } .admin-table th { text-align:left; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:10px 8px; border-bottom:1px solid var(--line); } .admin-table td { padding:15px 8px; border-bottom:1px solid var(--line); } .code { color:var(--red-dark); font-weight:700; } .danger { color:var(--red-dark); background:transparent; font-size:12px; font-weight:700; }
+		.manual-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 0 0; padding:14px 18px; background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(250,248,245,.94)); border:1px solid rgba(18,20,21,.07); border-radius:12px 12px 0 0; backdrop-filter:blur(16px); box-shadow:0 16px 40px rgba(12,13,14,.08), inset 0 1px 0 rgba(255,255,255,.4); } .manual-toolbar label { display:block; min-width:200px; color:#5f6368; font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; } .manual-toolbar select { margin-top:6px; background:#fff; border:1px solid #dadce0; border-radius:8px; color:#202124; font-size:13px; height:32px; box-shadow:none; } .manual-sheet-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; } .manual-mini-btn { background:#f4f3f1; color:#17181a; border:1px solid #e3e1dd; border-radius:10px; padding:9px 12px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; transition:.2s; } .manual-mini-btn:hover { background:#efeae7; border-color:#d8cfc9; transform:translateY(-1px); } .manual-mini-btn.secondary { background:#fff; } .sheet-meta { color:#5f6368; font-size:12px; text-align:right; } .sheet-meta strong { color:#111315; font-size:14px; letter-spacing:.04em; text-transform:uppercase; } .sheet-wrap { overflow:auto; border:1px solid rgba(17,19,21,.08); border-top:none; background:#fff; border-radius:0 0 16px 16px; box-shadow:0 18px 36px rgba(19,20,22,.05); } .manual-sheet { width:100%; min-width:100%; border-collapse:separate; border-spacing:0; background:transparent; table-layout:fixed; } .manual-sheet thead th { position:sticky; top:0; z-index:2; background:linear-gradient(180deg,#faf9f7,#f3f1ee); color:#4d5055; font-size:10px; font-weight:700; letter-spacing:.09em; padding:10px 8px; text-align:center; text-transform:uppercase; white-space:nowrap; border-right:1px solid #e5e2df; border-bottom:1px solid #e7e3df; } .manual-sheet tbody td { border-right:1px solid #ece7e1; border-bottom:1px solid #ece7e1; padding:0; height:34px; background:rgba(255,255,255,.9); } .manual-sheet tbody tr:nth-child(odd) td { background:rgba(255,255,255,.96); } .manual-sheet tbody tr:nth-child(even) td { background:rgba(249,248,246,.95); } .manual-sheet td:first-child, .manual-sheet th:first-child { width:42px; text-align:center; color:#7c7d80; background:linear-gradient(180deg,#f4f2f0,#f0efed); } .manual-sheet input { border:0; border-radius:0; background:transparent; margin:0; padding:9px 10px; height:34px; width:100%; font-size:13px; color:#17181a; } .manual-sheet input:focus { outline:none; background:#fff; box-shadow:inset 0 0 0 1px rgba(181,118,67,.45), inset 0 0 0 1px rgba(255,255,255,.6); } .manual-sheet .sheet-index-cell { width:42px; } .sheet-footer { display:flex; justify-content:space-between; align-items:center; padding:12px 4px 0; color:#5f6368; font-size:12px; } .sheet-footer strong { color:#202124; }
+		#manualView .welcome { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin:0 0 8px; padding:0; border:0; background:transparent; } #manualView .welcome .eyebrow { margin-bottom:4px; } #manualView .welcome h1 { font-size:31px; line-height:1; margin:0; letter-spacing:-.02em; text-transform:none; } #manualView .welcome .date { border-left:0; padding-left:0; color:#5f6368; font-size:12px; } #manualView .panel { background:transparent; border:none; box-shadow:none; padding:0; } .manual-doc-header { display:none; } .manual-doc-header h1 { font-size:28px; line-height:1; margin:0; letter-spacing:-.02em; text-transform:none; } .manual-doc-header .eyebrow { margin-bottom:5px; } .manual-doc-header .doc-status { color:#5f6368; font-size:12px; }
+		#manualView .page { max-width:none; width:100%; padding:32px 36px 48px; background:linear-gradient(135deg,#faf8f5 0%,#f3f0ec 50%,#efefeb 100%); min-height:100vh; margin:0; } #manualView .panel.sheet-panel { background:transparent; border:none; box-shadow:none; padding:0; }		body.manual-view-mode .topbar { display:none; }
+		body.manual-view-mode #manualView, body.manual-view-mode #manualWorkoutView { display:block; width:100%; }
+		body.manual-view-mode #manualWorkoutView .page { min-height:100vh; }
+		body.manual-view-mode .sidebar { display:none; }
+		body.manual-view-mode main { grid-column:1; width:100%; }
+		body.manual-view-mode #manualView .page, body.manual-view-mode #manualWorkoutView .page { min-height:100vh; }
+		#manualView .primary-btn { border-radius:4px; box-shadow:none; }
+		#manualView .manual-toolbar, #manualView .sheet-wrap, #manualView .panel.sheet-panel { border-left:0; border-right:0; }
+		#manualView .sheet-footer { display:none; }
+		#manualView .sheet-wrap { border:none; background:transparent; }
+		#manualView .manual-sheet { min-width:100%; border-top:0; background:transparent; }
+		.manual-doc-header { display:flex; align-items:center; justify-content:space-between; margin:0 0 24px; padding:16px 0; border-bottom:2px solid rgba(26,28,32,.06); } .manual-doc-header h1 { font-size:32px; line-height:1; margin:0; letter-spacing:-.02em; text-transform:none; color:#0c0d0e; font-weight:600; } .manual-doc-header .sheet-nav { display:flex; align-items:center; gap:14px; } .manual-doc-header .nav-arrow { background:linear-gradient(135deg,#f8f6f4,#f1ede9); border:1px solid #dcd8d2; border-radius:8px; width:38px; height:38px; display:grid; place-items:center; cursor:pointer; transition:.2s; font-size:18px; font-weight:600; color:#0c0d0e; box-shadow:0 2px 6px rgba(18,20,21,.06); } .manual-doc-header .nav-arrow:hover:not(:disabled) { background:linear-gradient(135deg,#f3efe9,#ebe5dd); border-color:#ccc0b5; transform:translateY(-2px); box-shadow:0 6px 14px rgba(18,20,21,.12); } .manual-doc-header .nav-arrow:disabled { opacity:.4; cursor:not-allowed; } .manual-page-info { color:#5f6368; font-size:13px; font-weight:700; min-width:80px; text-align:center; letter-spacing:.04em; }
+		.sheet-image-section { margin:0 0 18px; padding:14px 16px; background:linear-gradient(135deg,#faf8f5,#f3f1ef); border:1px solid #e5e2df; border-radius:12px; } .sheet-image-section label { display:block; color:#5f6368; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; } .sheet-image-section input[type="file"] { display:none; } .sheet-image-upload { background:#fff; border:2px dashed #d9d6d1; border-radius:8px; padding:12px 14px; cursor:pointer; text-align:center; color:#5f6368; font-size:12px; font-weight:600; transition:.2s; } .sheet-image-upload:hover { border-color:#c0b8b1; background:#faf8f5; } #sheetImage { max-width:100%; height:auto; border-radius:8px; margin-top:8px; }
+		.page-nav-bar { display:flex; gap:8px; padding:12px 18px 0; margin-bottom:-1px; justify-content:center; flex-wrap:wrap; } .page-nav-btn { background:linear-gradient(135deg,#f8f6f4,#f1ede9); color:#0c0d0e; border:1px solid #dcd8d2; border-radius:8px 8px 0 0; padding:10px 16px; font-size:12px; font-weight:600; cursor:pointer; transition:.2s; text-transform:uppercase; letter-spacing:.05em; } .page-nav-btn:hover { background:linear-gradient(135deg,#f3efe9,#ebe5dd); border-color:#ccc0b5; } .page-nav-btn.active { background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(250,248,245,.94)); border-bottom-color:rgba(250,248,245,.94); color:#0c0d0e; font-weight:700; }
+		body.manual-view-mode { background:linear-gradient(135deg,#faf8f5 0%,#f3f0ec 50%,#efefeb 100%); }
+		body.manual-view-mode .app-shell { display:block; }
+		body.manual-view-mode .sidebar { display:none; }
+		body.manual-view-mode main { grid-column:1; width:100%; }
+		body.manual-view-mode .topbar { display:none; }
+		body.manual-view-mode #manualView { display:block; width:100%; }
+		body.manual-view-mode #manualView .page { min-height:100vh; }
+		.toast { position:fixed; right:25px; bottom:25px; z-index:9; background:var(--ink); color:#fff; border-left:4px solid var(--red); padding:15px 20px; box-shadow:var(--shadow); transform:translateY(20px); opacity:0; transition:.25s; } .toast.show { transform:none; opacity:1; }
+		.loading-screen { position:fixed; inset:0; z-index:20; background:#fff; display:grid; place-items:center; } .loading-content { text-align:center; } .dumbbell { position:relative; width:92px; height:46px; margin:auto; animation:spin-dumbbell 1.2s linear infinite; filter:drop-shadow(0 4px 5px #e52f3730); } .dumbbell-bar { position:absolute; left:22px; right:22px; top:20px; height:6px; border-radius:3px; background:var(--red); } .dumbbell-weight { position:absolute; top:8px; width:16px; height:30px; border-radius:4px; background:var(--red); } .dumbbell-weight.left { left:5px; } .dumbbell-weight.right { right:5px; } .dumbbell-grip { position:absolute; top:13px; width:7px; height:20px; border-radius:3px; background:var(--red); } .dumbbell-grip.left { left:17px; } .dumbbell-grip.right { right:17px; } .loading-label { margin-top:18px; color:var(--ink); font-family:'Barlow Condensed',sans-serif; font-size:16px; letter-spacing:1.7px; text-transform:uppercase; } @keyframes spin-dumbbell { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+		#painMapView .painmap-layout { display:grid; grid-template-columns:1.2fr .8fr; gap:24px; align-items:start; }
+		#painMapView .painmap-figure-panel { background:linear-gradient(135deg,#faf8f5,#f4f0ec); border:1px solid #e8e4df; border-radius:18px; padding:22px; min-height:560px; }
+		#painMapView .painmap-figure-stage { position:relative; max-width:460px; width:100%; margin:0 auto; height:520px; background:radial-gradient(circle at 50% 18%, rgba(229,47,55,.09), rgba(229,47,55,0) 30%), #f7f5f3; border-radius:24px; border:1px solid #e3dfdb; overflow:hidden; }
+		#painMapView .painmap-controls { padding:20px; background:#fff; border:1px solid #e7e3df; border-radius:16px; }
+		@media(max-width:900px) { .app-shell { display:block; } .sidebar { position:static; width:auto; height:auto; padding:17px 20px; } .brand { margin:0 0 18px; } .nav-label, .sidebar-bottom { display:none; } .nav { display:flex; overflow:auto; gap:5px; } .nav button { white-space:nowrap; padding:10px; } main { display:block; } .topbar { height:67px; } .stats { grid-template-columns:repeat(2,1fr); } #painMapView .painmap-layout { display:block !important; } #painMapView .painmap-figure-panel { min-height:0; padding:16px; } #painMapView .painmap-figure-stage { height:clamp(320px,62vw,460px); } #painMapView .painmap-controls { margin-top:18px; } }
+		@media(max-width:600px) { .page { padding-top:32px; } .welcome { display:block; } .date { display:inline-block; margin-top:20px; } .stats, .dashboard-grid, .form-grid { grid-template-columns:1fr; } .full { grid-column:auto; } .panel { padding:19px; } .session-row { grid-template-columns:1fr 70px; } .session-row .edit-btn { grid-column:2/-1; justify-self:start; } .login-brand { margin-bottom:45px; } .attendance-head { display:block; } .attendance-stats { margin-top:18px; } .calendar { gap:4px; } .day-toggle { min-height:65px; padding:8px 5px; } .day-number { font-size:21px; } .day-status { font-size:8px; } #painMapView .page { padding:24px 12px 36px; } #painMapView .panel { padding:16px !important; } #painMapView .painmap-figure-stage { height:clamp(280px,72vw,360px); } #painMapView .painmap-controls { padding:16px; } #painMapView .painmap-controls .pain-side-btn { min-height:42px; } #painMapView .pain-region { font-size:9px !important; } }
+		/* Refined visual layer */
+		body { background:linear-gradient(135deg,#f6f6f4 0%,#ededeb 100%); }
+		.sidebar { background:linear-gradient(160deg,#111315 0%,#070809 100%); box-shadow:12px 0 35px #00000018; }
+		.brand { user-select:none; } .brand-mark { border-radius:7px; box-shadow:0 7px 18px #e52f3750; } .brand-name { letter-spacing:1px; }
+		.topbar { border-bottom-color:#d2d3d0; box-shadow:0 8px 25px #15161708; }
+		.page { animation:page-enter .45s ease both; } @keyframes page-enter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+		.panel { border-color:#dedfdb; border-radius:10px; box-shadow:0 10px 30px #10111208; transition:box-shadow .25s,transform .25s; } .panel:hover { box-shadow:0 16px 36px #10111212; }
+		.session-row { border-top-color:#e8e8e5; transition:background .2s,padding-left .2s; } .session-row:hover { background:#fafaf8; padding-left:7px; }
+		.set-chip { border:1px solid #e5e5e1; border-radius:5px; background:#f7f7f5; }
+		.primary-btn, .edit-btn, .secondary-btn { border-radius:6px; } .primary-btn { box-shadow:0 6px 14px #e52f3728; } .primary-btn:focus-visible, .edit-btn:focus-visible, .secondary-btn:focus-visible, .nav button:focus-visible { outline:2px solid var(--red); outline-offset:3px; }
+		input, select { border-radius:6px; transition:border-color .2s,box-shadow .2s,background .2s; } input:focus, select:focus { box-shadow:0 0 0 3px #e52f3718; background:#fff; }
+		.login-screen input:focus { background:transparent; color:#fff; box-shadow:none; }
+		.login-screen { background:radial-gradient(circle at 80% 15%,#242628 0%,#0c0d0e 38%,#070809 100%); } .login-screen:after { content:''; position:absolute; inset:0; opacity:.18; pointer-events:none; background-image:linear-gradient(#fff1 1px,transparent 1px),linear-gradient(90deg,#fff1 1px,transparent 1px); background-size:48px 48px; mask-image:linear-gradient(to bottom right,black,transparent 65%); }
+		.login-box { padding:8px 0; } .login-box h1 { letter-spacing:.5px; } .login-copy { font-size:13px; } .code-field { border-bottom-color:#676a6c; } .code-field:focus-within { border-bottom-color:var(--red); }
+		.loading-screen { background:#fbfbfa; } .loading-content { padding:28px 34px; } .dumbbell { filter:drop-shadow(0 7px 8px #e52f3738); } .loading-label { font-weight:600; }
+		.modal { border-radius:10px; border:1px solid #e0e0dd; }
+		button, a, select, input, textarea { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+		@media (hover:none) and (pointer:coarse) { button { transition:none !important; } .primary-btn:hover, .manual-mini-btn:hover, .nav button:hover, .day-toggle:hover, .panel:hover, .stat:hover, .session-row:hover { transform:none; box-shadow:none; padding-left:initial; } .primary-btn:active, .manual-mini-btn:active, .nav button:active { opacity:.78; } }
+		@media(max-width:900px) { .topbar { padding:0 16px; } .top-actions { gap:12px; } .page { padding-left:16px; padding-right:16px; } .nav { -webkit-overflow-scrolling:touch; scrollbar-width:none; } .nav::-webkit-scrollbar { display:none; } .nav button { min-height:44px; } }
+		@media(max-width:600px) { button { transition:none !important; } .topbar { position:static; } .page { padding:26px 14px 48px; } .welcome h1 { font-size:45px; } .primary-btn, .secondary-btn, .manual-mini-btn { min-height:44px; } .manual-workout-tools { width:100%; } .manual-workout-tools .manual-mini-btn { flex:1 1 calc(50% - 9px); } }
+		.dashboard-set-weights { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px; padding:8px 0 2px; }
+		.dashboard-set-weights input { width:78px; margin:0; padding:8px; }
+		.dashboard-workout-columns, .dashboard-workout-row { display:grid; grid-template-columns:minmax(150px,1.5fr) minmax(130px,1fr) 58px 58px repeat(var(--dashboard-set-columns),minmax(92px,1fr)); gap:6px; align-items:center; }
+		.dashboard-workout-columns { color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; }
+		.dashboard-workout-row { border-top:1px solid var(--line); padding-top:8px; }
+		.dashboard-workout-row input { min-width:0; margin:0; padding:9px 8px; }
+		.dashboard-empty-set { min-height:38px; }
+		@media(max-width:900px) { .dashboard-workout-panel { overflow:auto; } .dashboard-workout-columns, .dashboard-workout-row { min-width:760px; } }
+		#manualWorkoutView { min-height:calc(100vh - 82px); padding:0; background:linear-gradient(135deg,#f8f5f0 0%,#eeebe5 100%); }
+		#manualWorkoutView .manual-workout-shell { max-width:1500px; margin:0 auto; padding:52px clamp(22px,4vw,60px) 72px; }
+		#manualWorkoutView .manual-workout-header { display:flex; align-items:flex-end; justify-content:space-between; gap:28px; margin-bottom:30px; padding-bottom:24px; border-bottom:1px solid #d8d1c8; }
+		#manualWorkoutView .manual-workout-header h1 { color:#151719; font-size:clamp(42px,5vw,64px); line-height:.88; letter-spacing:.01em; }
+		#manualWorkoutView .manual-workout-header h1:after { content:'.'; color:var(--red); }
+		#manualWorkoutView .manual-workout-header .date { color:#77736e; border-left-color:var(--red); font-size:11px; text-transform:uppercase; letter-spacing:.12em; }
+		#manualWorkoutView .manual-workout-toolbar { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:15px 18px; background:rgba(255,255,255,.78); border:1px solid #ded8d0; border-bottom:0; border-radius:14px 14px 0 0; box-shadow:0 12px 28px rgba(37,31,25,.08); backdrop-filter:blur(14px); }
+		#manualWorkoutView .manual-workout-tools { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+		#manualWorkoutView .manual-workout-tools .manual-mini-btn { background:#191b1d; color:#fff; border-color:#191b1d; border-radius:6px; padding:10px 13px; letter-spacing:.1em; }
+		#manualWorkoutView .manual-workout-tools .manual-mini-btn:hover { background:var(--red); border-color:var(--red); transform:translateY(-1px); }
+		#manualWorkoutView .manual-workout-tools .manual-mini-btn.secondary { background:#fff; color:#252627; border-color:#d9d2ca; }
+		#manualWorkoutView .manual-workout-tools .manual-mini-btn.secondary:hover { color:var(--red-dark); background:#fffaf7; border-color:#cdbeb4; }
+		#manualWorkoutView #manualWorkoutPlayerField { display:flex; align-items:center; gap:8px; min-width:205px; color:#77736e !important; }
+		#manualWorkoutView #manualWorkoutPlayerField select { margin:0 !important; height:38px; border-radius:6px; border-color:#d8d0c8; background:#fff; }
+		#manualWorkoutView .sheet-meta { color:#817b75; font-size:11px; letter-spacing:.04em; }
+		#manualWorkoutView .sheet-meta strong { color:#191b1d; font-size:12px; }
+		#manualWorkoutView .manual-workout-table-wrap { border:1px solid #ded8d0; border-top:0; border-radius:0 0 14px 14px; background:#fff; box-shadow:0 18px 34px rgba(37,31,25,.08); }
+		#manualWorkoutView .manual-workout-table { border-collapse:separate; border-spacing:0; background:#fff; }
+		#manualWorkoutView .manual-workout-table th { background:#25282a; color:#fff; border-color:#3b3e40; padding:14px 12px; font-size:10px; letter-spacing:.12em; }
+		#manualWorkoutView .manual-workout-table th .manual-workout-header { background:transparent !important; color:#fff !important; border:0; padding:0; min-height:22px; width:100%; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+		#manualWorkoutView .manual-workout-table th .manual-workout-header::placeholder { color:rgba(255,255,255,.72); }
+		#manualWorkoutView .manual-workout-table td { border-color:#ebe6e0; padding:0; background:#fff; }
+		#manualWorkoutView .manual-workout-table tr:hover td { background:#fffaf7; }
+		#manualWorkoutView .manual-workout-table input { min-height:46px; margin:0; border:0; border-radius:0; background:transparent; padding:12px; color:#252627; }
+		#manualWorkoutView .manual-workout-table input:focus { box-shadow:inset 0 0 0 2px var(--red); background:#fff; }
+		#manualWorkoutView .manual-workout-shell > div:last-child { gap:20px !important; }
+		#manualWorkoutView .manual-workout-shell > div:last-child > aside { width:240px !important; min-width:240px !important; padding:22px !important; background:#17191b !important; border:1px solid #17191b !important; border-radius:12px !important; box-shadow:0 16px 32px rgba(20,18,16,.14); }
+		#manualWorkoutView .manual-workout-shell > div:last-child > aside label { color:#e8e1d9 !important; letter-spacing:.12em; }
+		#manualWorkoutView #manualWorkoutNotes { min-height:150px; margin-top:14px !important; border:1px solid #45484a !important; border-radius:6px !important; background:#242729 !important; color:#fff !important; line-height:1.55; }
+		#manualWorkoutView #manualWorkoutNotes:focus { border-color:var(--red) !important; box-shadow:0 0 0 3px #e52f3733; outline:0; }
+		#manualWorkoutView #manualWorkoutNotes::placeholder { color:#9b9da0; }
+		@media(max-width:800px) { #manualWorkoutView .manual-workout-shell { padding:34px 18px 48px; } #manualWorkoutView .manual-workout-header { display:block; } #manualWorkoutView .manual-workout-header .date { display:inline-block; margin-top:18px; } #manualWorkoutView .manual-workout-toolbar { align-items:flex-start; flex-direction:column; } #manualWorkoutView .sheet-meta { text-align:left; } #manualWorkoutView .manual-workout-shell > div:last-child { display:block !important; } #manualWorkoutView .manual-workout-shell > div:last-child > aside { width:100% !important; min-width:0 !important; margin-top:16px; } #manualWorkoutView .manual-workout-table-wrap { overflow:auto; } }
+		@media(max-width:600px) { body.manual-view-mode #manualView .page { padding:18px 8px 34px; } body.manual-view-mode #manualView .manual-doc-header { display:block; margin:0 0 12px; padding:10px 6px 16px; } body.manual-view-mode #manualView .manual-doc-header > div:first-child { width:100%; } body.manual-view-mode #manualView .manual-doc-header h1 { font-size:28px; } body.manual-view-mode #manualView .manual-doc-header label { display:block !important; margin-top:16px !important; } body.manual-view-mode #manualView #manualPlayerSelect { width:100% !important; height:44px !important; margin-top:7px !important; } body.manual-view-mode #manualView .sheet-nav { margin-top:14px; justify-content:flex-start; } body.manual-view-mode #manualView .nav-arrow { width:44px; height:44px; } body.manual-view-mode #manualView .page-nav-bar { justify-content:flex-start; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; padding:6px 4px 0; gap:6px; -webkit-overflow-scrolling:touch; scrollbar-width:none; } body.manual-view-mode #manualView .page-nav-bar::-webkit-scrollbar { display:none; } body.manual-view-mode #manualView .page-nav-btn { flex:0 0 auto; min-height:44px; padding:10px 12px; } body.manual-view-mode #manualView .manual-toolbar { display:block; padding:10px 8px; border-radius:10px 10px 0 0; } body.manual-view-mode #manualView .manual-sheet-tools { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; } body.manual-view-mode #manualView .manual-sheet-tools .manual-mini-btn { width:100%; min-height:44px; padding:9px 6px; } body.manual-view-mode #manualView .manual-highlight-picker { grid-column:1/-1; min-width:0; display:flex; align-items:center; justify-content:space-between; min-height:44px; padding:0 8px; border:1px solid #e3e1dd; border-radius:8px; background:#fff; } body.manual-view-mode #manualView .manual-highlight-picker input { width:50px; height:34px; margin:0; padding:2px; } body.manual-view-mode #manualView .sheet-meta { margin-top:10px; text-align:left; } body.manual-view-mode #manualView .sheet-wrap { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 265px); -webkit-overflow-scrolling:touch; overscroll-behavior:contain; touch-action:pan-x pan-y; } body.manual-view-mode #manualView .manual-sheet { min-width:760px; table-layout:fixed; } body.manual-view-mode #manualView .manual-sheet thead th { position:sticky; top:0; min-width:88px; padding:10px 6px; } body.manual-view-mode #manualView .manual-sheet tbody td { height:46px; min-width:88px; } body.manual-view-mode #manualView .manual-sheet input { height:46px; min-height:46px; padding:10px 8px; font-size:14px; } body.manual-view-mode #manualView .manual-sheet td:first-child, body.manual-view-mode #manualView .manual-sheet th:first-child { min-width:42px; width:42px; } }
+	</style>
+</head>
+<body>
+	<section id="loginScreen" class="login-screen">
+		<div class="login-box">
+			<div class="brand login-brand" id="loginBrand"><div class="brand-mark">S</div><div class="brand-name">Smart Gym</div></div>
+			<div class="eyebrow">Member access / 01</div>
+			<h1>YOUR WORK<br><span>STARTS HERE.</span></h1>
+			<p class="login-copy">Enter your personal member code to access your training plan, track your progress, and keep moving forward.</p>
+			<form id="loginForm"><div class="code-field"><span></span><input id="loginCode" inputmode="numeric" maxlength="5" placeholder="0000" autocomplete="off" required></div><button class="primary-btn" type="submit">ENTER MEMBER AREA &nbsp; →</button></form>
+		</div>
+	</section>
+	<section id="loadingScreen" class="loading-screen hidden" aria-label="Loading your training plan"><div class="loading-content"><div class="dumbbell" aria-hidden="true"><span class="dumbbell-weight left"></span><span class="dumbbell-grip left"></span><span class="dumbbell-bar"></span><span class="dumbbell-grip right"></span><span class="dumbbell-weight right"></span></div><div class="loading-label">Loading your training</div></div></section>
+
+	<div id="app" class="app-shell hidden">
+			<aside class="sidebar"><div class="brand" id="appBrand"><div class="brand-mark">S</div><div class="brand-name">Smart Gym</div></div><div class="nav-label">Workspace</div><nav class="nav"><button class="active" data-view="dashboard"><span class="nav-icon">⌂</span> Overview</button><button id="manualNav" data-view="manual"><span class="nav-icon">▤</span> Manual System</button><button id="manualWorkoutNav" data-view="manualWorkout"><span class="nav-icon">▣</span> Manual Workout</button><button id="coachMembersNav" data-view="coachMembers" class="hidden"><span class="nav-icon">＋</span> Add Member</button><button id="painMapNav" data-view="painMap"><span class="nav-icon">◉</span> Body PainMap</button><button id="painMapHistoryNav" data-view="painMapHistory"><span class="nav-icon">◫</span> PainMap History</button><button id="historyNav" data-view="history"><span class="nav-icon">◫</span> History</button><button id="attendanceNav" data-view="attendance"><span class="nav-icon">✓</span> Attendance</button></nav><div class="sidebar-bottom">MEMBER STATUS<br><strong style="color:#fff">● ACTIVE</strong><span class="admin-link" id="adminOpen">Manage participants →</span></div></aside>
+		<main><header class="topbar"><div class="breadcrumb">Smart Gym / <b id="crumb">Overview</b></div><div class="top-actions"><button class="primary-btn hidden" id="coachManage">EDIT ALL TRAINING</button><button class="icon-btn" title="Notifications">♧</button><div id="userAvatar" class="avatar">AM</div></div></header>
+			<div id="dashboardView" class="page"><div class="welcome"><div><div class="eyebrow">Member dashboard</div><h1><span id="greeting">Good morning,</span> <span id="memberFirst">Member.</span></h1></div><div class="date" id="today"></div></div>
+				<div class="dashboard-grid"><section class="panel focus-panel"><div class="eyebrow">Your focus</div><h2 class="focus-title">Consistency<br>beats <span>intensity.</span></h2><div class="panel-sub">Keep showing up. The results will follow.</div></section><section class="panel dashboard-workout-panel"><div class="panel-head" style="margin-bottom:14px"><div><div class="eyebrow">Workout editor</div><h2 style="font-size:30px;margin-top:7px">Train <span style="color:var(--red)">today.</span></h2><div class="panel-sub">Edit your session here. Changes save to History and the database automatically.</div></div><div style="display:grid;gap:10px;justify-items:end"><span id="dashboardWorkoutSaveStatus" class="sheet-meta">Saved</span><button id="dashboardAddExercise" class="primary-btn" type="button">+ Add exercise</button></div></div><div id="dashboardWorkoutEditor"></div></section></div>
+			</div>
+			<div id="coachMembersView" class="page hidden"><div class="welcome"><div><div class="eyebrow">Coach control</div><h1>Create a <span>member.</span></h1></div></div><section class="panel" style="padding:28px"><div class="form-grid" style="max-width:560px"><label>Full name<input id="coachNewMemberName" placeholder="e.g. Omar Hassan"></label><label>Generated code<input id="coachGeneratedMemberCode" placeholder="Code appears here" readonly></label></div><div class="modal-actions"><button class="secondary-btn" id="coachGenerateMemberCode" type="button">Generate code</button><button class="primary-btn" id="coachCreateMember" type="button">Create member account</button></div><div style="margin-top:26px;border-top:1px solid var(--line);padding-top:18px"><div class="eyebrow">Members</div><div id="coachMembersList" class="coach-members-list" style="margin-top:12px;display:grid;gap:10px"></div></div></section></div>
+			<div id="attendanceView" class="page hidden"><div class="welcome"><div><div class="eyebrow">Consistency tracker</div><h1>Mark your <span>attendance.</span></h1></div></div><section id="memberAttendancePanel" class="panel"><div class="attendance-head"><div><div class="eyebrow" id="attendanceMonth"></div><h2>Days attended</h2><div class="attendance-copy">Tap each day you came in. Your check-ins are saved for the entire month.</div></div><div class="attendance-stats"><div class="attendance-stat"><span>This month</span><strong id="monthAttendance">0</strong></div><div class="attendance-stat"><span>This week</span><strong id="weekAttendance">0</strong></div></div></div><div id="attendanceCalendar" class="calendar"></div></section><section id="coachAttendancePanel" class="panel hidden"><div class="panel-head"><div><div class="eyebrow">Coach overview</div><h2>Attendance</h2><div class="panel-sub">Each participant's check-ins during the last 30 days.</div></div></div><div id="coachAttendanceList" class="coach-attendance-list"></div></section></div>
+			<div id="manualView" class="page hidden"><div class="manual-doc-header"><div><h1>Manual System</h1><label style="margin-top:8px;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Select Player<select id="manualPlayerSelect" style="margin-top:4px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:32px;width:220px;padding:4px 8px"></select></label></div><div class="sheet-nav"><button class="nav-arrow" id="manualPrevPage" title="Previous page">‹</button><span class="manual-page-info"><span id="manualCurrentPage">1</span> / <span id="manualTotalPages">1</span></span><button class="nav-arrow" id="manualNextPage" title="Next page">›</button></div></div><div class="page-nav-bar" id="manualPageNav"></div><section class="panel sheet-panel"><div class="manual-toolbar"><div class="manual-sheet-tools"><button class="manual-mini-btn" id="manualAddRow">+ Row</button><button class="manual-mini-btn" id="manualAddColumn">+ Column</button><button class="manual-mini-btn" id="manualMergeCells">Merge</button><button class="manual-mini-btn secondary" id="manualHighlightCell">Highlight</button><label class="manual-highlight-picker" for="manualHighlightColor"><span>Color</span><input id="manualHighlightColor" type="color" value="#f7d55a" aria-label="Choose highlight color"></label><button class="manual-mini-btn secondary" id="manualUnmergeCells" title="Unmerge selected cells">Unmerge</button><button class="manual-mini-btn secondary" id="manualResetSheet">Clear</button><button class="manual-mini-btn" id="manualAddPage">+ Page</button></div><div class="sheet-meta"><strong>Blank sheet</strong><br><span>Freeform spreadsheet</span></div></div><div class="sheet-wrap"><table class="manual-sheet"><thead><tr></tr></thead><tbody id="manualSheetBody"></tbody></table></div></section></div>
+			<div id="manualWorkoutView" class="page hidden"><div class="manual-workout-shell"><div class="manual-workout-header"><div><div class="eyebrow">Planner</div><h1>Manual System</h1></div><div class="date">Training sheet</div></div><div class="page-nav-bar" id="manualWorkoutPageNav"></div><div class="manual-workout-toolbar"><div class="manual-workout-tools"><label id="manualWorkoutPlayerField" style="display:none;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Save for<select id="manualWorkoutPlayerSelect" style="margin-left:8px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:32px;padding:4px 8px"></select></label><button id="manualWorkoutAddRow" class="manual-mini-btn" type="button">+ Row</button><button id="manualWorkoutAddColumn" class="manual-mini-btn" type="button">+ Column</button><button id="manualWorkoutSaveHistory" class="manual-mini-btn secondary" type="button">Save to history</button><button id="manualWorkoutClear" class="manual-mini-btn secondary" type="button">Clear</button></div><div class="sheet-meta"><strong>Sheet</strong><br><span>Plan, track, and progress</span></div></div><div style="display:flex;gap:18px;align-items:flex-start;overflow:auto"><div class="manual-workout-table-wrap" style="flex:1;min-width:620px"><table id="manualWorkoutTable" class="manual-workout-table"><thead><tr></tr></thead><tbody></tbody></table></div><aside style="width:220px;min-width:220px;padding:16px;background:#fff;border:1px solid #e7e3df;border-radius:10px"><label for="manualWorkoutNotes" style="display:block;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">General notes</label><textarea id="manualWorkoutNotes" rows="8" placeholder="Control the tempo" style="display:block;width:100%;margin-top:10px;box-sizing:border-box;resize:vertical;border:1px solid #dadce0;border-radius:6px;padding:10px;font:inherit;color:#202124"></textarea></aside></div></div></div>
+			<div id="historyView" class="page hidden"><div class="manual-doc-header"><div><h1>History</h1><label style="margin-top:8px;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Choose player<select id="historyPlayerSelect" style="margin-top:4px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:32px;width:220px;padding:4px 8px"></select></label></div><div class="sheet-nav"><label style="display:flex;align-items:center;gap:10px;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Choose date<input id="historyDatePicker" type="date" style="background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:32px;padding:4px 8px"></label></div></div><section class="panel sheet-panel"><div class="manual-toolbar"><div class="manual-sheet-tools"><span class="sheet-meta"><strong>Session history</strong><br><span>Saved by date and player</span></span></div></div><div class="sheet-wrap"><div id="historyList" class="history-list" style="padding:20px"></div></div></section></div>
+			<div id="painMapView" class="page hidden"><div class="welcome"><div><div class="eyebrow">Body PainMap</div><h1>Where does it <span>hurt?</span></h1></div></div><section class="panel" style="padding:28px"><div class="painmap-layout"><div class="painmap-figure-panel"><div class="painmap-figure-stage"><div style="position:absolute;left:50%;top:12%;transform:translateX(-50%);width:110px;height:110px;border-radius:50%;background:#1a1d1f;opacity:.92"></div><div style="position:absolute;left:50%;top:31%;transform:translateX(-50%);width:150px;height:200px;border-radius:22px 22px 28px 28px;background:#1a1d1f;opacity:.92"></div><div class="pain-region" data-pain-region="neck" style="position:absolute;left:50%;top:22%;transform:translateX(-50%);width:70px;height:30px;border-radius:18px;background:#1a1d1f;color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Neck</div><div class="pain-region" data-pain-region="shoulders" style="position:absolute;left:28%;top:35%;width:120px;height:48px;border-radius:22px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Shoulders</div><div class="pain-region" data-pain-region="shoulders" style="position:absolute;right:28%;top:35%;width:120px;height:48px;border-radius:22px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Shoulders</div><div class="pain-region" data-pain-region="arms" style="position:absolute;left:12%;top:43%;width:72px;height:150px;border-radius:18px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Arms</div><div class="pain-region" data-pain-region="arms" style="position:absolute;right:12%;top:43%;width:72px;height:150px;border-radius:18px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Arms</div><div class="pain-region" data-pain-region="back" style="position:absolute;left:50%;top:39%;transform:translateX(-50%);width:120px;height:180px;border-radius:30px 30px 20px 20px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Back</div><div class="pain-region" data-pain-region="core" style="position:absolute;left:50%;top:52%;transform:translateX(-50%);width:110px;height:120px;border-radius:24px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Core</div><div class="pain-region" data-pain-region="legs" style="position:absolute;left:27%;top:67%;width:100px;height:170px;border-radius:18px 18px 26px 26px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Legs</div><div class="pain-region" data-pain-region="legs" style="position:absolute;right:27%;top:67%;width:100px;height:170px;border-radius:18px 18px 26px 26px;background:#1a1d1f;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 8px 20px rgba(18,20,22,.12)">Legs</div></div></div><div style="background:#fff;border:1px solid #e6e1db;border-radius:18px;padding:22px"><div style="display:grid;gap:12px"><label style="color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Player<select id="painMapPlayerSelect" style="margin-top:6px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:36px;width:100%;padding:5px 8px"></select></label><label style="color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Date<input id="painMapDate" type="date" style="margin-top:6px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:36px;width:100%;padding:5px 8px"></label><div style="background:#faf8f5;border:1px solid #eae3dc;border-radius:10px;padding:12px"><div style="color:#5f6368;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Selected area</div><div id="painMapRegionLabel" style="font-size:22px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;margin-top:5px;color:#111315">Neck</div></div><div><div style="color:#5f6368;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Muscles</div><div id="painMapMuscleList" style="display:flex;flex-wrap:wrap;gap:8px"></div></div><label style="color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Pain intensity<select id="painMapIntensity" style="margin-top:6px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:36px;width:100%;padding:5px 8px"><option value="Mild">Mild</option><option value="Moderate">Moderate</option><option value="Severe">Severe</option></select></label><label style="color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Notes<textarea id="painMapNotes" rows="5" placeholder="Describe the pain, tightness or trigger" style="margin-top:6px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;width:100%;padding:10px;resize:vertical"></textarea></label><button id="savePainMapEntry" class="primary-btn" type="button" style="width:100%;margin-top:8px">Save pain map entry</button></div></div></div></section></div>
+			<div id="painMapHistoryView" class="page hidden"><div class="manual-doc-header"><div><h1>PainMap History</h1><label style="margin-top:8px;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:block">Choose player<select id="painMapHistoryPlayerSelect" style="margin-top:4px;background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:32px;width:220px;padding:4px 8px"></select></label></div><div class="sheet-nav"><label style="display:flex;align-items:center;gap:10px;color:#5f6368;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Choose date<input id="painMapHistoryDatePicker" type="date" style="background:#fff;border:1px solid #dadce0;border-radius:8px;color:#202124;font-size:13px;height:32px;padding:4px 8px"></label></div></div><section class="panel sheet-panel"><div class="manual-toolbar"><div class="manual-sheet-tools"><span class="sheet-meta"><strong>Pain history</strong><br><span>Saved by date and player</span></span></div></div><div class="sheet-wrap"><div id="painMapHistoryList" style="padding:20px"></div></div></section></div>
+
+		</main>
+	</div>
+	<div id="modalWrap" class="modal-wrap hidden"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Admin workspace</div><h2>Manage participants</h2></div><button class="close" id="closeModal">×</button></div><div id="adminContent"></div><section id="specializedBuilder" class="hidden" style="border-top:1px solid var(--line);margin-top:28px;padding-top:24px"><div class="eyebrow">Specialized programming</div><h3 style="font-size:24px;margin:5px 0 18px">Build a targeted exercise</h3><div class="form-grid"><label>Participant<select id="specialMember"></select></label><label>Training day<select id="specialDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></label><label>Exercise name<input id="specialName" placeholder="e.g. Romanian deadlift"></label><label>Muscle group<select id="specialMuscle"><option>Chest</option><option>Back</option><option>Shoulders</option><option>Arms</option><option>Legs</option><option>Core</option><option>Full body</option></select></label><label>Equipment<select id="specialEquipment"><option>Barbell</option><option>Dumbbell</option><option>Machine</option><option>Cable</option><option>Bodyweight</option><option>Kettlebell</option></select></label><label>Sets<input id="specialSets" type="number" min="1" value="3"></label><label>Reps<input id="specialReps" type="number" min="1" value="10"></label><label>Weight (kg)<input id="specialWeight" type="number" min="0" value="0"></label><label>Rest (seconds)<input id="specialRest" type="number" min="0" value="90"></label><label class="full">Coach notes<input id="specialNotes" placeholder="Tempo, technique, or progression notes"></label></div><div class="modal-actions"><button class="primary-btn" id="specialAssign">Add specialized exercise</button></div></section></div></div>
+	<div id="editWrap" class="modal-wrap hidden"><div class="modal"><div class="modal-head"><div><div class="eyebrow" id="editEyebrow">Edit training data</div><h2 id="editTitle">Exercise</h2></div><button class="close" id="closeEdit">×</button></div><div class="form-grid"><label class="coach-only hidden">Plan title<input id="editPlanTitle"></label><label class="coach-only hidden">Exercise name<input id="editName"></label><label class="coach-only hidden">Training focus<input id="editDetail"></label><label class="coach-only hidden">Sets<input id="editSets" type="number" min="1"></label><label class="coach-only hidden">Reps<input id="editReps" type="number" min="1"></label><label class="full">Weight for each set<div id="editSetWeights" class="set-list"></div></label></div><div class="modal-actions"><button class="secondary-btn" id="cancelEdit">Cancel</button><button class="primary-btn" id="saveEdit">Save changes</button></div></div></div>
+	<div id="logWorkoutWrap" class="modal-wrap hidden"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Track performance</div><h2>Log training session</h2></div><button class="close" id="closeLogWorkout">×</button></div><div class="form-grid"><label class="coach-only hidden">Participant<select id="logWorkoutMember"></select></label><label>Date<input id="logWorkoutDate" type="date"></label><label>Exercise name<input id="logWorkoutExercise" placeholder="e.g. Barbell Bench Press"></label><label>Muscle group<select id="logWorkoutMuscle"><option>Chest</option><option>Back</option><option>Shoulders</option><option>Arms</option><option>Legs</option><option>Core</option><option>Full body</option></select></label><label>Sets completed<input id="logWorkoutSets" type="number" min="1" value="4"></label><label>Reps per set<input id="logWorkoutReps" type="number" min="1" value="8"></label><label>Weight lifted (kg)<input id="logWorkoutWeight" type="number" min="0" step="0.5" value="0"></label><label>Duration (minutes)<input id="logWorkoutDuration" type="number" min="1" value="30"></label><label class="full">Notes<input id="logWorkoutNotes" placeholder="How did you feel? Any issues?"></label></div><div class="modal-actions"><button class="secondary-btn" id="cancelLogWorkout">Cancel</button><button class="primary-btn" id="saveLogWorkout">Log session</button></div></div></div>
+	<div id="toast" class="toast"></div>
+	<script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+	<script>
+		const firebaseConfig = {
+			apiKey: "AIzaSyBxgEi0MwTMdz9e7AElgq5499qDDZHxKhY",
+			authDomain: "smart-gym-c5460.firebaseapp.com",
+			projectId: "smart-gym-c5460",
+			storageBucket: "smart-gym-c5460.firebasestorage.app",
+			messagingSenderId: "412588601222",
+			appId: "1:412588601222:web:7e876a77e3402d49dd8607"
+		};
+		firebase.initializeApp(firebaseConfig);
+		const db = firebase.firestore();
+		const remoteStateDocument = db.collection('gym').doc('main');
+	</script>
+	<script>
+		const seed = [{ code:'', name:'Moaz Korain', workouts:[{name:'Barbell Bench Press', detail:'Chest · Compound', sets:4, reps:8, weight:80},{name:'Pull Ups', detail:'Back · Bodyweight', sets:4, reps:10, weight:0},{name:'Overhead Press', detail:'Shoulders · Compound', sets:3, reps:10, weight:45},{name:'Incline Dumbbell Press', detail:'Chest · Accessory', sets:3, reps:12, weight:24}] }];
+		const requestedNames = ['Mohamed El Ashqar','Zeina Amer','Ferial Ashraf','Moaz Korain','Sara Ayman','Mariam Ayman','Ali Ehab','Osama Zaki','Hassan Atef','Mohamed Ashraf','Tayem Mohamed','Aamer Edris','Abdullah Abushabab','Ahmed Osama','Ali Sherif','Ann Asem','Hamza Basel','Malak Ismail','Mohanad Shaban','Moutaz Wael','Omar Abushabab','Omar Wael','Retage Ramadan','Seif Soliman','Marawn Mohamed','Salma Karim'];
+		const activeCodeByName={'Mohamed El Ashqar':'9046','Zeina Amer':'9929','Ferial Ashraf':'5709','Moaz Korain':'7047','Sara Ayman':'0452','Mariam Ayman':'6090','Ali Ehab':'7852','Osama Zaki':'5416','Hassan Atef':'0689','Mohamed Ashraf':'1681','Tayem Mohamed':'3024','Aamer Edris':'2006','Abdullah Abushabab':'1567','Ahmed Osama':'0908','Ali Sherif':'7582','Ann Asem':'9063','Hamza Basel':'1486','Malak Ismail':'7930','Mohanad Shaban':'8649','Moutaz Wael':'2678','Omar Abushabab':'2206','Omar Wael':'7643','Retage Ramadan':'4188','Seif Soliman':'4046','Marawn Mohamed':'0778','Salma Karim':'0486'};
+		function stableCode(name){ let hash=0; for(const character of String(name)){ hash=(hash*31+character.charCodeAt(0))%10000; } return String(hash).padStart(4,'0'); }
+		function assignStableCodes(){ const used=new Set(); participants.forEach(member=>{ let code=activeCodeByName[member.name] || stableCode(member.name); while(used.has(code)) code=String((Number(code)+1)%10000).padStart(4,'0'); member.code=code; used.add(code); }); coach.code='4516'; }
+		const defaultWorkouts=()=>[{name:'Barbell Squat',detail:'Legs · Compound',sets:4,reps:8,weight:60},{name:'Barbell Bench Press',detail:'Chest · Compound',sets:4,reps:8,weight:50},{name:'Lat Pulldown',detail:'Back · Strength',sets:3,reps:10,weight:45},{name:'Shoulder Press',detail:'Shoulders · Accessory',sets:3,reps:12,weight:25}]; const ensureWorkout=item=>{ item.sets=Math.max(1,Number(item.sets)||1); item.reps=Math.max(1,Number(item.reps)||1); item.weight=Number(item.weight)||0; item.day=item.day || 'Monday'; item.muscle=item.muscle || (item.detail || 'Full body').split(' · ')[0]; item.equipment=item.equipment || 'Free weights'; item.rest=Number(item.rest)||90; item.notes=item.notes || ''; item.weights=Array.from({length:item.sets},(_,index)=>Number(item.weights?.[index] ?? item.weight)||0); return item; }; const ensurePlan=member=>{ member.planTitle=member.planTitle || 'Upper body power'; member.workouts=(member.workouts || defaultWorkouts()).map(ensureWorkout); return member; };
+		const $ = id => document.getElementById(id); const storageKey = 'smartGymParticipants'; const backupKey = 'smartGymParticipantsBackup'; const coachKey='smartGymCoach'; const coachBackupKey='smartGymCoachBackup'; const readStored=(key,backup,fallback)=>{ try { const primary=localStorage.getItem(key); if(primary) return JSON.parse(primary); } catch(error) {} try { const savedBackup=localStorage.getItem(backup); if(savedBackup) return JSON.parse(savedBackup); } catch(error) {} return fallback; }; let participants = readStored(storageKey,backupKey,null) || seed; participants=participants.filter(p=>!/^(Alex|Alex Morgan)$/i.test(p.name)); const usedCodes = () => participants.map(p=>p.code).concat(readStored(coachKey,coachBackupKey,null)?.code || []); function generateCode(){ let code; do { code=String(Math.floor(Math.random()*10000)).padStart(4,'0'); } while(usedCodes().includes(code)); return code; } participants.forEach(p=>{ if(!/^\d{4}$/.test(p.code || '')) p.code=generateCode(); ensurePlan(p); }); requestedNames.forEach(name=>{ if(!participants.some(p=>p.name===name)) participants.push({name,code:generateCode(),workouts:defaultWorkouts(),planTitle:'Upper body power'}); }); participants.forEach(p=>{ ensurePlan(p); while(p.workouts.length<2) p.workouts.push(defaultWorkouts()[p.workouts.length]); }); const coach=readStored(coachKey,coachBackupKey,null) || {name:'Hossam Enaya',code:generateCode(),role:'coach',workouts:[]}; if(!/^\d{4}$/.test(coach.code || '')) coach.code=generateCode(); let current; let isCoach=false; let editingIndex; let editingMember; let activeView='dashboard';
+		let remoteStateLoaded=false; let remoteStateError=false; let localChangeAt=0; const markLocalChange=()=>{ localChangeAt=Date.now(); }; const persist=(key,backup,value)=>{ const serialized=JSON.stringify(value); try { localStorage.setItem(key,serialized); localStorage.setItem(backup,serialized); return true; } catch(error) { return false; } }; const manualSystemSnapshot=()=>participants.map(member=>({code:member.code,name:member.name,planTitle:member.planTitle,workouts:member.workouts})); const manualPagesSnapshot=()=>Object.fromEntries(participants.map(member=>[member.code,JSON.stringify(readStored(getManualPagesKey(member.code),getManualPagesBackupKey(member.code),[emptyManualGrid()]))])); const syncRemoteState=async()=>{ if(!remoteStateLoaded) return false; try { ensureHistory(); const sharedManualWorkout=typeof manualWorkoutState==='undefined' ? null : JSON.stringify(manualWorkoutState); const sharedManualWorkoutHistory=typeof getManualWorkoutHistory==='function' ? getManualWorkoutHistory() : []; const sharedPainMapHistory=typeof getPainMapHistory==='function' ? getPainMapHistory() : []; await remoteStateDocument.set({participants,manualSystem:manualSystemSnapshot(),manualSystemPages:manualPagesSnapshot(),manualWorkout:sharedManualWorkout,manualWorkoutHistory:sharedManualWorkoutHistory,painMapHistory:sharedPainMapHistory,coach,workoutHistory,updatedAt:new Date().toISOString()}); remoteStateError=false; return true; } catch(error){ remoteStateError=true; console.error('Could not sync gym data:',error); notify('Cloud save failed. Check Firebase Firestore rules and configuration.'); return false; } }; const queueRemoteSync=(()=>{ let timer; return ()=>{ clearTimeout(timer); timer=setTimeout(()=>syncRemoteState(),350); }; })(); const save = () => { markLocalChange(); const result=persist(storageKey,backupKey,participants); queueRemoteSync(); return result; }; const saveCoach=()=>{ markLocalChange(); const result=persist(coachKey,coachBackupKey,coach); queueRemoteSync(); return result; }; persist(storageKey,backupKey,participants); persist(coachKey,coachBackupKey,coach);
+		async function loadRemoteState(){ try { const snapshot=await remoteStateDocument.get(); if(snapshot.exists){ const data=snapshot.data(); if(Array.isArray(data.participants)){ participants=data.participants.filter(p=>!/^(Alex|Alex Morgan)$/i.test(p.name)); participants.forEach(member=>{ ensurePlan(member); }); assignStableCodes(); } if(data.coach){ Object.assign(coach,data.coach); } if(Array.isArray(data.workoutHistory)){ workoutHistory=data.workoutHistory; ensureHistory(); persist(historyKey,historyBackupKey,workoutHistory); } if(data.manualSystemPages && typeof data.manualSystemPages==='object'){ Object.entries(data.manualSystemPages).forEach(([playerCode,pages])=>{ try { const decoded=typeof pages==='string' ? JSON.parse(pages) : pages; if(Array.isArray(decoded)) persist(getManualPagesKey(playerCode),getManualPagesBackupKey(playerCode),decoded); } catch(error) {} }); } if(data.manualWorkout){ try { const decoded=typeof data.manualWorkout==='string' ? JSON.parse(data.manualWorkout) : data.manualWorkout; if(decoded && Array.isArray(decoded.headers) && Array.isArray(decoded.rows)){ manualWorkoutState=decoded; persist(manualWorkoutStorageKey,manualWorkoutStorageKey+'Backup',manualWorkoutState); } } catch(error) {} } if(Array.isArray(data.manualWorkoutHistory)){ saveManualWorkoutHistory(data.manualWorkoutHistory); } if(Array.isArray(data.painMapHistory)){ savePainMapHistory(data.painMapHistory); } coach.code='4516'; persist(storageKey,backupKey,participants); persist(coachKey,coachBackupKey,coach); } remoteStateLoaded=true; queueRemoteSync(); } catch(error) { remoteStateLoaded=true; remoteStateError=true; console.warn('Cloud database unavailable:',error); setTimeout(()=>notify('Cloud database unavailable. Data is only saved on this device.'),0); } }
+		function watchRemoteState(){ return remoteStateDocument.onSnapshot(snapshot=>{ if(!snapshot.exists || snapshot.metadata.fromCache) return; const data=snapshot.data(); if(Array.isArray(data.participants)){ participants=data.participants.filter(p=>!/^(Alex|Alex Morgan)$/i.test(p.name)); participants.forEach(member=>ensurePlan(member)); assignStableCodes(); persist(storageKey,backupKey,participants); } if(data.coach) Object.assign(coach,data.coach); if(Array.isArray(data.workoutHistory)){ workoutHistory=data.workoutHistory; ensureHistory(); persist(historyKey,historyBackupKey,workoutHistory); } if(data.manualSystemPages && typeof data.manualSystemPages==='object'){ Object.entries(data.manualSystemPages).forEach(([playerCode,pages])=>{ try { const decoded=typeof pages==='string' ? JSON.parse(pages) : pages; if(Array.isArray(decoded)) persist(getManualPagesKey(playerCode),getManualPagesBackupKey(playerCode),decoded); } catch(error) {} }); } if(data.manualWorkout){ try { const decoded=typeof data.manualWorkout==='string' ? JSON.parse(data.manualWorkout) : data.manualWorkout; if(decoded && Array.isArray(decoded.headers) && Array.isArray(decoded.rows)){ manualWorkoutState=decoded; persist(manualWorkoutStorageKey,manualWorkoutStorageKey+'Backup',manualWorkoutState); } } catch(error) {} } if(Array.isArray(data.manualWorkoutHistory)){ saveManualWorkoutHistory(data.manualWorkoutHistory); } if(Array.isArray(data.painMapHistory)){ savePainMapHistory(data.painMapHistory); } coach.code='4516'; persist(coachKey,coachBackupKey,coach); if(current){ const refreshed=isCoach ? coach : participants.find(member=>member.code===current.code); if(refreshed){ current=refreshed; if(!$('app').classList.contains('hidden') && activeView !== 'manual') render(); } if(activeView === 'manual' && manualCurrentPlayer && !manualSheetTyping){ loadPlayerManualPages(manualCurrentPlayer); } if(!$('manualWorkoutView').classList.contains('hidden')) { const activeManualWorkoutCell = document.activeElement && document.activeElement.closest && document.activeElement.closest('#manualWorkoutTable'); const manualWorkoutFocusWithin = !!(document.querySelector && document.querySelector('#manualWorkoutTable:focus-within')) || !!activeManualWorkoutCell; if(!manualWorkoutFocusWithin && !manualWorkoutTyping) renderManualWorkoutTable(); } if(!$('historyView').classList.contains('hidden')) renderHistoryPage(); } },error=>{ remoteStateError=true; console.warn('Realtime cloud sync unavailable:',error); }); }
+		assignStableCodes(); const remoteReady=Promise.race([loadRemoteState(),new Promise(resolve=>setTimeout(()=>{remoteStateLoaded=true; resolve();},5000))]); remoteReady.then(watchRemoteState);
+		window.addEventListener('pagehide',()=>{ save(); saveCoach(); }); window.addEventListener('storage',event=>{ if(event.key===storageKey || event.key===backupKey){ participants=readStored(storageKey,backupKey,participants); if(current && !isCoach){ const refreshed=participants.find(member=>member.code===current.code); if(refreshed){ current=refreshed; render(); } } } });
+		function notify(text){ $('toast').textContent=text.replace(/#/g,''); $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2600); }
+		function renderSession(target, editable){ if(!target) return; target.innerHTML=''; current.workouts.forEach((item,index)=>{ const row=document.createElement('div'); row.className='session-row'; const setCount=Math.max(1,Number(item.sets)||1); const weights=item.weights || []; const setChips=Array.from({length:setCount},(_,setIndex)=>{ const setWeight=weights[setIndex] ?? item.weight; return `<span class="set-chip"><b>SET ${setIndex+1}</b> · ${item.reps} reps · ${setWeight ? setWeight+' kg' : 'Bodyweight'}</span>`; }).join(''); const detail=[item.detail,item.day,item.rest ? `Rest ${item.rest}s` : '',item.notes].filter(Boolean).join(' · '); row.innerHTML=`<div class="exercise">${item.name}<span>${detail}</span><div class="set-list">${setChips}</div></div>`; target.appendChild(row); });
+			target.querySelectorAll('[data-edit]').forEach(btn=>btn.onclick=()=>openEdit(Number(btn.dataset.edit))); target.querySelectorAll('[data-delete]').forEach(btn=>btn.onclick=()=>{ current.workouts.splice(Number(btn.dataset.delete),1); save(); render(); notify('Exercise removed.'); });
+		}
+		function renderWeightLog(){
+			if(!$('totalWeight') || !$('averageWeight') || !$('weightLogList')) return;
+			const entries=[];
+			current.workouts.forEach((item,index)=>{ const setCount=Math.max(1,Number(item.sets)||1); const weights=item.weights || []; for(let setIndex=0; setIndex<setCount; setIndex++) entries.push(Number(weights[setIndex] ?? item.weight) || 0); });
+			const total=entries.reduce((sum,weight)=>sum+weight,0);
+			$('totalWeight').textContent=`${total.toFixed(1).replace('.0','')} kg`;
+			$('averageWeight').textContent=`${(entries.length ? total/entries.length : 0).toFixed(1).replace('.0','')} kg`;
+			$('weightLogList').innerHTML=current.workouts.map((item,index)=>{ const setCount=Math.max(1,Number(item.sets)||1); const weights=item.weights || []; return `<div class="weight-entry"><div class="weight-entry-name">${item.name}<span>${item.reps} reps per set</span></div><div class="weight-inputs">${Array.from({length:setCount},(_,setIndex)=>`<label class="weight-input-label">Set ${setIndex+1}<input class="weight-input" data-weight-exercise="${index}" data-weight-set="${setIndex}" type="number" min="0" step="0.5" value="${weights[setIndex] ?? item.weight ?? 0}" disabled></label>`).join('')}</div></div>`; }).join('');
+		}
+		const dateKey=date=>{ const year=date.getFullYear(); const month=String(date.getMonth()+1).padStart(2,'0'); const day=String(date.getDate()).padStart(2,'0'); return `${year}-${month}-${day}`; };
+		function renderAttendance(){ const today=new Date(); if(isCoach){ const start=new Date(today); start.setDate(today.getDate()-29); const recentKeys=new Set(Array.from({length:30},(_,index)=>dateKey(new Date(start.getFullYear(),start.getMonth(),start.getDate()+index)))); $('memberAttendancePanel').classList.add('hidden'); $('coachAttendancePanel').classList.remove('hidden'); $('coachAttendanceList').innerHTML=participants.map(member=>{ const dates=Object.values(member.attendance || {}).flat(); const count=dates.filter(value=>recentKeys.has(value)).length; return `<div class="coach-attendance-row"><span>${member.name} :</span><strong>${count}</strong></div>`; }).join(''); return; } const year=today.getFullYear(); const month=today.getMonth(); const monthKey=`${year}-${String(month+1).padStart(2,'0')}`; current.attendance=current.attendance || {}; const attended=current.attendance[monthKey] || []; const monthDays=new Date(year,month+1,0).getDate(); const firstDay=new Date(year,month,1).getDay(); const weekStart=new Date(year,month,today.getDate()-today.getDay()); const weekEnd=new Date(year,month,today.getDate()-today.getDay()+6); const labels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; $('memberAttendancePanel').classList.remove('hidden'); $('coachAttendancePanel').classList.add('hidden'); $('attendanceMonth').textContent=today.toLocaleDateString('en-US',{month:'long',year:'numeric'}); $('monthAttendance').textContent=attended.length; $('weekAttendance').textContent=attended.filter(value=>{ const date=new Date(`${value}T00:00:00`); return date>=weekStart && date<=weekEnd; }).length; $('attendanceCalendar').innerHTML=labels.map(label=>`<div class="calendar-label">${label}</div>`).join('')+Array.from({length:firstDay},()=>'<button class="day-toggle" disabled></button>').join('')+Array.from({length:monthDays},(_,index)=>{ const day=index+1; const date=new Date(year,month,day); const key=dateKey(date); const isAttended=attended.includes(key); const inWeek=date>=weekStart && date<=weekEnd; return `<button class="day-toggle${isAttended ? ' attended' : ''}${inWeek ? ' current-week' : ''}" data-attendance-date="${key}" aria-pressed="${isAttended}"><span class="day-number">${day}</span><span class="day-status">${isAttended ? 'Attended' : 'Not marked'}</span></button>`; }).join(''); document.querySelectorAll('[data-attendance-date]').forEach(button=>button.onclick=async()=>{ const key=button.dataset.attendanceDate; const dates=current.attendance[monthKey] || []; const wasAttended=dates.includes(key); current.attendance[monthKey]=wasAttended ? dates.filter(value=>value!==key) : [...dates,key]; const memberIndex=participants.findIndex(member=>member.code===current.code); if(memberIndex>=0) participants[memberIndex]=current; persist(storageKey,backupKey,participants); const saved=await syncRemoteState(); renderAttendance(); notify(saved ? (wasAttended ? 'Attendance removed.' : 'Attendance saved.') : 'Attendance could not sync.'); }); }
+		function refreshTimeAndDate(){ const now=new Date(); const hour=now.getHours(); const greeting=hour<12 ? 'Good morning,' : hour<17 ? 'Good afternoon,' : hour<21 ? 'Good evening,' : 'Good night,'; $('greeting').textContent=greeting; const memberName=current ? (current.name || 'Member').split(' ')[0] : 'Member'; if($('memberFirst')) $('memberFirst').textContent=memberName; $('today').textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}); if(current && !isCoach && !$('attendanceView').classList.contains('hidden')) renderAttendance(); }
+		const sheetEscape=value=>String(value ?? '').replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[character]));
+const manualGridKey='smartGymManualGrid';
+const getManualPagesKey=(playerCode)=>`smartGymManualPages_${playerCode}`;
+const getManualPagesBackupKey=(playerCode)=>`smartGymManualPages_${playerCode}_backup`;
+const emptyManualGrid=(rows=18, cols=8)=>({ rows, cols, headers:Array.from({length:cols},(_,index)=>columnLabel(index)), data:Array.from({length:rows},()=>Array.from({length:cols},()=>'')), mergedCells:[], highlightedCells:[], image:null });
+var manualGrid;
+var manualCurrentPage=0;
+var manualPages=[];
+var manualCurrentPlayer=null;
+var manualSelectedCell=null;
+var manualSelectionRange={start:null,end:null};
+var manualSelectionDragging=false;
+var manualSheetTyping=false;
+var manualHighlightColor = localStorage.getItem('manualHighlightColor') || '#f7d55a';
+function getManualSelectionRect(){
+if(!manualSelectionRange.start || !manualSelectionRange.end) return null;
+const startRow=Math.min(manualSelectionRange.start.r,manualSelectionRange.end.r);
+const endRow=Math.max(manualSelectionRange.start.r,manualSelectionRange.end.r);
+const startCol=Math.min(manualSelectionRange.start.c,manualSelectionRange.end.c);
+const endCol=Math.max(manualSelectionRange.start.c,manualSelectionRange.end.c);
+return {startRow,endRow,startCol,endCol};
+}
+function setManualSelectedCell(row,col){
+manualSelectedCell={r:row,c:col};
+manualSelectionRange={start:{r:row,c:col},end:{r:row,c:col}};
+}
+function isCellInManualSelection(row,col){
+const rect=getManualSelectionRect();
+if(!rect) return false;
+return row>=rect.startRow && row<=rect.endRow && col>=rect.startCol && col<=rect.endCol;
+}
+function getManualSelectionCells(){
+const rect=getManualSelectionRect();
+if(!rect){
+if(!manualSelectedCell) return [];
+return [{r:manualSelectedCell.r,c:manualSelectedCell.c}];
+}
+const cells=[];
+for(let row=rect.startRow; row<=rect.endRow; row++){
+for(let col=rect.startCol; col<=rect.endCol; col++) cells.push({r:row,c:col});
+}
+return cells;
+}
+function ensureManualPages(playerCode){
+if(!playerCode) return [emptyManualGrid()];
+const key=getManualPagesKey(playerCode);
+const backupKey=getManualPagesBackupKey(playerCode);
+const saved=readStored(key, backupKey, [emptyManualGrid()]);
+manualPages=Array.isArray(saved) && saved.length > 0 ? saved : [emptyManualGrid()];
+manualPages=manualPages.map(page=>{ const normalized=page || emptyManualGrid(); normalized.cols = Number(normalized.cols) || 8; normalized.rows = Number(normalized.rows) || 18; normalized.data = Array.isArray(normalized.data) ? normalized.data : Array.from({length:normalized.rows},()=>Array.from({length:normalized.cols},()=>'')); normalized.headers = Array.isArray(normalized.headers) ? normalized.headers.slice(0, normalized.cols) : [];
+normalized.mergedCells = Array.isArray(normalized.mergedCells) ? normalized.mergedCells : [];
+normalized.highlightedCells = Array.isArray(normalized.highlightedCells) ? normalized.highlightedCells : [];
+while(normalized.headers.length < normalized.cols){ normalized.headers.push(columnLabel(normalized.headers.length)); }
+while(normalized.data.length < normalized.rows){ normalized.data.push(Array.from({length:normalized.cols},()=>'')); }
+normalized.data = normalized.data.map(row=>{ const safeRow = Array.isArray(row) ? row.slice(0, normalized.cols) : []; while(safeRow.length < normalized.cols) safeRow.push(''); return safeRow; });
+return normalized; });
+manualCurrentPage=Math.max(0, Math.min(manualCurrentPage, manualPages.length-1));
+return manualPages;
+}
+function saveManualPages(playerCode){
+if(!playerCode) return;
+const key=getManualPagesKey(playerCode);
+const backupKey=getManualPagesBackupKey(playerCode);
+try { localStorage.setItem(key, JSON.stringify(manualPages)); localStorage.setItem(backupKey, JSON.stringify(manualPages)); } catch(error) {}
+queueRemoteSync();
+}
+function canEditManualSheet(playerCode){
+if(!playerCode) return false;
+if(isCoach) return true;
+if(current && current.code === playerCode) return true;
+return false;
+}
+function loadPlayerManualPages(playerCode){
+if(!playerCode) return;
+manualCurrentPlayer=playerCode;
+manualPages=ensureManualPages(playerCode);
+manualCurrentPage=0;
+manualGrid=manualPages[manualCurrentPage] || emptyManualGrid();
+manualSelectedCell=null;
+renderManual();
+}
+function columnLabel(index){
+let label='';
+let current=index+1;
+while(current>0){ const remainder=(current-1)%26; label=String.fromCharCode(65+remainder)+label; current=Math.floor((current-1)/26); }
+return label;
+}
+function normalizeManualGridShape(grid){
+if(!grid) return emptyManualGrid();
+const normalized=grid;
+normalized.cols = Number(normalized.cols) || 8;
+normalized.rows = Number(normalized.rows) || 18;
+normalized.headers = Array.isArray(normalized.headers) ? normalized.headers.slice(0, normalized.cols) : [];
+while(normalized.headers.length < normalized.cols){ normalized.headers.push(columnLabel(normalized.headers.length)); }
+normalized.mergedCells = Array.isArray(normalized.mergedCells) ? normalized.mergedCells.filter(merge=>merge && Number.isFinite(merge.r) && Number.isFinite(merge.c)) : [];
+normalized.highlightedCells = Array.isArray(normalized.highlightedCells) ? normalized.highlightedCells.filter(cell=>cell && Number.isFinite(cell.r) && Number.isFinite(cell.c)) : [];
+normalized.data = Array.isArray(normalized.data) ? normalized.data : Array.from({length:normalized.rows},()=>Array.from({length:normalized.cols},()=>''));
+while(normalized.data.length < normalized.rows){ normalized.data.push(Array.from({length:normalized.cols},()=>'')); }
+normalized.data = normalized.data.map(row=>{ const safeRow = Array.isArray(row) ? row.slice(0, normalized.cols) : []; while(safeRow.length < normalized.cols) safeRow.push(''); return safeRow; });
+return normalized;
+}
+function getManualCellKey(row,col){ return `${row}:${col}`; }
+function renderManual(){
+manualGrid=normalizeManualGridShape(manualPages[manualCurrentPage] || emptyManualGrid());
+manualPages[manualCurrentPage]=manualGrid;
+const grid=manualGrid;
+const sheetBody=$('manualSheetBody');
+if(!sheetBody) return;
+const highlightPicker=$('manualHighlightColor');
+if(highlightPicker){
+highlightPicker.value = manualHighlightColor;
+highlightPicker.oninput=()=>{
+manualHighlightColor = highlightPicker.value || '#f7d55a';
+localStorage.setItem('manualHighlightColor', manualHighlightColor);
+};
+}
+const headerRow=document.querySelector('#manualView .manual-sheet thead tr');
+if(headerRow){ headerRow.innerHTML='<th class="sheet-index-cell">#</th>' + Array.from({length:grid.cols},(_,index)=>`<th><input class="sheet-header-input" data-manual-header-col="${index}" type="text" value="${sheetEscape(grid.headers[index] || columnLabel(index))}" spellcheck="false"></th>`).join('');
+headerRow.querySelectorAll('.sheet-header-input').forEach(input=>{
+input.oninput=()=>{
+const col=Number(input.dataset.manualHeaderCol);
+manualGrid.headers[col]=input.value || columnLabel(col);
+saveManualGrid();
+};
+});
+ }
+const renderedRows=[];
+for(let rowIndex=0; rowIndex<grid.rows; rowIndex++){
+ const rowCells=[];
+ for(let colIndex=0; colIndex<grid.cols; colIndex++){
+   const merge = grid.mergedCells.find(mergeCell => mergeCell.r === rowIndex && mergeCell.c === colIndex);
+   const rowSpan = merge ? (merge.rowSpan || 1) : 1;
+   const colSpan = merge ? (merge.colSpan || 1) : 1;
+   const isCovered = !merge && grid.mergedCells.some(mergeItem => {
+    if(rowIndex < mergeItem.r || colIndex < mergeItem.c) return false;
+    if(rowIndex >= mergeItem.r + (mergeItem.rowSpan || 1) || colIndex >= mergeItem.c + (mergeItem.colSpan || 1)) return false;
+    return rowIndex >= mergeItem.r && rowIndex < mergeItem.r + (mergeItem.rowSpan || 1) && colIndex >= mergeItem.c && colIndex < mergeItem.c + (mergeItem.colSpan || 1);
+   });
+   if(isCovered) continue;
+   const highlightMatch = grid.highlightedCells.find(cell => cell.r === rowIndex && cell.c === colIndex);
+   const isHighlighted = !!highlightMatch || !!(merge && grid.highlightedCells.some(cell => cell.r >= merge.r && cell.r < merge.r + rowSpan && cell.c >= merge.c && cell.c < merge.c + colSpan));
+   const highlightColor = highlightMatch?.color || (merge && grid.highlightedCells.find(cell => cell.r === merge.r && cell.c === merge.c)?.color) || '';
+   const isSelected = isCellInManualSelection(rowIndex,colIndex) || !!(merge && isCellInManualSelection(merge.r, merge.c));
+   const cellStyle = highlightColor ? `background:${highlightColor};` : '';
+   rowCells.push(`<td class="${isHighlighted ? 'sheet-cell-highlighted' : ''} ${isSelected ? 'sheet-cell-selected' : ''} ${merge ? 'merged-cell' : ''}" data-manual-row="${rowIndex}" data-manual-col="${colIndex}" ${rowSpan > 1 ? `rowspan="${rowSpan}"` : ''} ${colSpan > 1 ? `colspan="${colSpan}"` : ''} style="${cellStyle}"><input type="text" data-manual-row="${rowIndex}" data-manual-col="${colIndex}" value="${sheetEscape(grid.data[rowIndex]?.[colIndex] ?? '')}" spellcheck="false" ${merge ? 'title="Merged cell"' : ''}></td>`);
+ }
+ renderedRows.push(`<tr><td class="sheet-index-cell">${rowIndex+1}</td>${rowCells.join('')}</tr>`);
+}
+sheetBody.innerHTML=renderedRows.join('');
+const canEdit=canEditManualSheet(manualCurrentPlayer);
+sheetBody.querySelectorAll('input[data-manual-row]').forEach(input=>{
+input.disabled=!canEdit;
+if(canEdit){
+input.onfocus=()=>{
+manualSheetTyping=true;
+const row=Number(input.dataset.manualRow);
+const col=Number(input.dataset.manualCol);
+if(!manualSelectionDragging){ setManualSelectedCell(row,col); }
+};
+input.onblur=()=>{ setTimeout(()=>{ manualSheetTyping=false; }, 150); };
+input.onmousedown=()=>{
+const row=Number(input.dataset.manualRow);
+const col=Number(input.dataset.manualCol);
+manualSelectionDragging=true;
+setManualSelectedCell(row,col);
+};
+input.onmouseenter=()=>{
+if(!manualSelectionDragging) return;
+const row=Number(input.dataset.manualRow);
+const col=Number(input.dataset.manualCol);
+manualSelectionRange.end={r:row,c:col};
+manualSelectedCell={r:row,c:col};
+renderManual();
+};
+input.onmouseup=()=>{
+manualSelectionDragging=false;
+};
+input.oninput=()=>{
+const row=Number(input.dataset.manualRow);
+const col=Number(input.dataset.manualCol);
+manualGrid.data[row][col]=input.value;
+saveManualGrid();
+};
+}
+});
+window.addEventListener('mouseup',()=>{ manualSelectionDragging=false; });
+$('manualCurrentPage').textContent=manualCurrentPage+1;
+$('manualTotalPages').textContent=manualPages.length;
+const isViewingOwnSheet=canEditManualSheet(manualCurrentPlayer);
+$('manualPrevPage').disabled=manualCurrentPage===0 || !isViewingOwnSheet;
+$('manualNextPage').disabled=manualCurrentPage===manualPages.length-1 || !isViewingOwnSheet;
+const manualAddRowBtn=$('manualAddRow'); if(manualAddRowBtn) manualAddRowBtn.disabled=!isViewingOwnSheet;
+const manualAddColBtn=$('manualAddColumn'); if(manualAddColBtn) manualAddColBtn.disabled=!isViewingOwnSheet;
+const manualMergeBtn=$('manualMergeCells'); if(manualMergeBtn) manualMergeBtn.disabled=!isViewingOwnSheet;
+const manualHighlightBtn=$('manualHighlightCell'); if(manualHighlightBtn) manualHighlightBtn.disabled=!isViewingOwnSheet;
+const manualResetBtn=$('manualResetSheet'); if(manualResetBtn) manualResetBtn.disabled=!isViewingOwnSheet;
+const manualAddPageBtn=$('manualAddPage'); if(manualAddPageBtn) manualAddPageBtn.disabled=!isViewingOwnSheet;
+renderPageNav();
+}
+function saveManualGrid(){
+if(manualPages[manualCurrentPage]) manualPages[manualCurrentPage]=manualGrid;
+saveManualPages(manualCurrentPlayer);
+}
+function mergeManualSelectedCell(){
+if(!manualGrid || !manualSelectedCell) return;
+const rect=getManualSelectionRect();
+const startRow=rect ? rect.startRow : manualSelectedCell.r;
+const startCol=rect ? rect.startCol : manualSelectedCell.c;
+const endRow=rect ? rect.endRow : manualSelectedCell.r;
+const endCol=rect ? rect.endCol : manualSelectedCell.c;
+const rowSpan=endRow-startRow+1;
+const colSpan=endCol-startCol+1;
+if(rowSpan > 1 || colSpan > 1){
+  const values=[];
+  for(let rowIndex=startRow; rowIndex<=endRow; rowIndex++){
+    for(let colIndex=startCol; colIndex<=endCol; colIndex++){
+      const value=manualGrid.data[rowIndex]?.[colIndex] ?? '';
+      if(value && value.trim()) values.push(value.trim());
+    }
+  }
+  manualGrid.mergedCells = manualGrid.mergedCells.filter(merge => !(merge.r>=startRow && merge.r<=endRow && merge.c>=startCol && merge.c<=endCol));
+  manualGrid.mergedCells.push({r:startRow, c:startCol, rowSpan, colSpan});
+  for(let rowIndex=startRow; rowIndex<=endRow; rowIndex++){
+    for(let colIndex=startCol; colIndex<=endCol; colIndex++){
+      if(rowIndex===startRow && colIndex===startCol){
+        manualGrid.data[rowIndex][colIndex]=values.join(' / ');
+      } else {
+        manualGrid.data[rowIndex][colIndex]='';
+      }
+    }
+  }
+  manualSelectedCell={r:startRow, c:startCol};
+  manualSelectionRange={start:{r:startRow,c:startCol}, end:{r:startRow,c:startCol}};
+  saveManualGrid();
+  renderManual();
+  notify('Cells merged.');
+  return;
+}
+if(startCol >= manualGrid.cols-1) { notify('Select a cell with space to the right to merge.'); return; }
+const existingIndex=manualGrid.mergedCells.findIndex(merge=>merge.r===startRow && merge.c===startCol);
+if(existingIndex >= 0){
+const merge=manualGrid.mergedCells[existingIndex];
+merge.colSpan = Math.min((merge.colSpan || 1)+1, manualGrid.cols-startCol);
+manualGrid.data[startRow][startCol] = [manualGrid.data[startRow][startCol], manualGrid.data[startRow][startCol+((merge.colSpan || 1)-1)]].filter(Boolean).join(' ');
+for(let i=startCol+1; i<startCol+merge.colSpan; i++){ manualGrid.data[startRow][i]=''; }
+} else {
+const merge={r:startRow, c:startCol, rowSpan:1, colSpan:2};
+manualGrid.mergedCells.push(merge);
+manualGrid.data[startRow][startCol]=[manualGrid.data[startRow][startCol], manualGrid.data[startRow][startCol+1]].filter(Boolean).join(' ');
+manualGrid.data[startRow][startCol+1]='';
+}
+manualSelectedCell={r:startRow, c:startCol};
+manualSelectionRange={start:{r:startRow,c:startCol}, end:{r:startRow,c:startCol}};
+saveManualGrid();
+renderManual();
+notify('Cells merged.');
+}
+function highlightManualSelectedCell(){
+if(!manualGrid || !manualSelectedCell) return;
+const cells=getManualSelectionCells();
+if(!cells.length) return;
+const existingCells = cells.filter(cell => manualGrid.highlightedCells.some(item => item.r===cell.r && item.c===cell.c));
+if(existingCells.length === cells.length){
+  manualGrid.highlightedCells = manualGrid.highlightedCells.filter(item => !cells.some(cell => cell.r===item.r && cell.c===item.c));
+  saveManualGrid();
+  renderManual();
+  notify('Highlight removed.');
+  return;
+}
+manualGrid.highlightedCells = manualGrid.highlightedCells.filter(item => !cells.some(cell => cell.r===item.r && cell.c===item.c));
+manualGrid.highlightedCells.push(...cells.map(cell => ({ r:cell.r, c:cell.c, color: manualHighlightColor })));
+saveManualGrid();
+renderManual();
+notify('Highlight applied.');
+}
+function unmergeManualSelectedCell(){
+if(!manualGrid) return;
+const anchor = manualSelectedCell || (manualSelectionRange.start ? manualSelectionRange.start : null);
+if(!anchor){ notify('Select a merged cell first.'); return; }
+const mergeIndex = manualGrid.mergedCells.findIndex(merge => merge.r === anchor.r && merge.c === anchor.c);
+if(mergeIndex === -1){ notify('No merged cells selected.'); return; }
+const merge = manualGrid.mergedCells[mergeIndex];
+const keptValue = manualGrid.data[merge.r]?.[merge.c] || '';
+for(let rowIndex=merge.r; rowIndex < merge.r + (merge.rowSpan || 1); rowIndex++){
+  for(let colIndex=merge.c; colIndex < merge.c + (merge.colSpan || 1); colIndex++){
+    manualGrid.data[rowIndex] = manualGrid.data[rowIndex] || Array(manualGrid.cols).fill('');
+    if(rowIndex === merge.r && colIndex === merge.c){
+      manualGrid.data[rowIndex][colIndex] = keptValue;
+    } else {
+      manualGrid.data[rowIndex][colIndex] = '';
+    }
+  }
+}
+manualGrid.mergedCells.splice(mergeIndex,1);
+manualSelectedCell={r:anchor.r, c:anchor.c};
+manualSelectionRange={start:{r:anchor.r,c:anchor.c}, end:{r:anchor.r,c:anchor.c}};
+saveManualGrid();
+renderManual();
+notify('Cells unmerged.');
+}
+function isHossamCoach(){ return !!(coach && typeof coach.name === 'string' && coach.name.toLowerCase().includes('hossam')); }
+function renderPageNavForBar(barId){
+const navBar=$(barId);
+if(!navBar) return;
+const views=['dashboard','manual','manualWorkout'];
+if(isCoach && isHossamCoach()) views.push('coachMembers');
+views.push('painMap','painMapHistory','history','attendance');
+const labels={dashboard:'Dashboard',manual:'Manual System',manualWorkout:'Manual Workout',coachMembers:'Add Member',painMap:'Body PainMap',painMapHistory:'PainMap History',history:'History',attendance:'Attendance'};
+navBar.innerHTML=views.map(view=>`<button class="page-nav-btn ${view===activeView?'active':''}" data-nav-view="${view}">${labels[view]}</button>`).join('');
+navBar.querySelectorAll('[data-nav-view]').forEach(btn=>{
+btn.onclick=()=>showView(btn.dataset.navView);
+});
+}
+function renderPageNav(){
+renderPageNavForBar('manualPageNav');
+renderPageNavForBar('manualWorkoutPageNav');
+}
+function updateCoachOnlyNavigation(){
+const isHossam=isCoach && isHossamCoach();
+const coachMembersNav=$('coachMembersNav'); if(coachMembersNav) coachMembersNav.classList.toggle('hidden', !isHossam);
+const coachMembersPage=$('coachMembersView'); if(coachMembersPage) coachMembersPage.classList.toggle('hidden', !(isHossam && activeView === 'coachMembers'));
+}
+function renderCoachMembersList(){
+const list=$('coachMembersList'); if(!list) return;
+const members=participants.filter(member => member && member.name && member.name !== coach.name);
+list.innerHTML = members.length ? members.map((member,index)=>`<div class="coach-member-row" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#f9f7f5"><div><div style="font-weight:700;color:#1f2933">${member.name}</div><div style="font-size:12px;color:#5f6368">Code: #${member.code}</div></div><button class="danger" type="button" data-remove-member="${index}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(220,53,69,.2);background:#fff1f2;color:#b42318">Remove</button></div>`).join('') : '<div style="padding:12px;border:1px dashed var(--line);border-radius:10px;color:#5f6368;background:#faf9f8">No members yet.</div>';
+list.querySelectorAll('[data-remove-member]').forEach(button=>{
+button.onclick=()=>{
+const memberIndex=Number(button.dataset.removeMember);
+const member=participants[memberIndex];
+if(!member || member.name === coach.name) return;
+if(!confirm(`Remove ${member.name} from the gym database?`)) return;
+participants.splice(memberIndex,1);
+save();
+renderAdmin();
+renderPageNav();
+renderCoachMemberPage();
+if(activeView === 'coachMembers') showView('coachMembers');
+notify(`Member ${member.name} removed.`);
+};
+});
+}
+function renderCoachMemberPage(){
+const codeInput=$('coachGeneratedMemberCode'); if(codeInput) codeInput.value='';
+const nameField=$('coachNewMemberName'); if(nameField && !nameField.value) nameField.focus();
+renderCoachMembersList();
+}
+function createCoachMember(){
+if(!isCoach || !isHossamCoach()){ notify('Only Hossam can create member accounts.'); return; }
+const nameField=$('coachNewMemberName'); const codeField=$('coachGeneratedMemberCode'); const name=(nameField?.value || '').trim(); if(!name){ notify('Enter the member full name first.'); return; }
+const alreadyExists=participants.some(member => member.name.trim().toLowerCase() === name.toLowerCase()); if(alreadyExists){ notify('This member already exists in the system.'); return; }
+const code = codeField && codeField.value ? codeField.value.trim() : generateCode();
+const member={ name, code, workouts:defaultWorkouts(), planTitle:'Upper body power' };
+participants.push(member); save(); renderAdmin(); renderPageNav(); renderCoachMemberPage(); showView('coachMembers'); notify(`Member ${name} created with code ${code}.`);
+}
+function generateCoachMemberCode(){
+if(!isCoach || !isHossamCoach()){ notify('Only Hossam can generate member codes.'); return; }
+const field=$('coachGeneratedMemberCode'); if(!field) return; let code; do { code=generateCode(); } while(participants.some(member => member.code === code)); field.value=code;
+}
+
+		function render(){
+if(!current) return;
+const memberName=current.name || 'Member';
+const firstName=memberName.split(' ')[0];
+$('memberFirst').textContent=firstName;
+$('userAvatar').textContent=firstName.slice(0,2).toUpperCase();
+			if(current.planTitle && $('dashboardPlanTitle')) $('dashboardPlanTitle').textContent=current.planTitle;
+updateCoachOnlyNavigation();
+renderSession($('sessionList'), false);
+renderWeightLog();
+renderAttendance();
+renderDashboardWorkoutEditor();
+if(activeView !== 'dashboard' && !$(activeView+'View')?.classList.contains('hidden')) showView(activeView);
+}
+function showView(view){
+const validViews=['dashboard','manual','manualWorkout','coachMembers','painMap','painMapHistory','history','attendance'];
+const isAllowedCoachPage = !((view === 'coachMembers') && !(isCoach && isHossamCoach()));
+const targetView=(validViews.includes(view) && isAllowedCoachPage) ? view : 'dashboard';
+activeView=targetView;
+validViews.forEach(name=>$(name+'View').classList.toggle('hidden',name!==targetView));
+document.querySelectorAll('.nav button').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===targetView));
+$('crumb').textContent=targetView==='manual' ? 'Manual System' : targetView==='manualWorkout' ? 'Manual Workout' : targetView==='coachMembers' ? 'Add Member' : targetView==='painMap' ? 'Body PainMap' : targetView==='painMapHistory' ? 'PainMap History' : targetView==='history' ? 'History' : targetView==='attendance' ? 'Attendance' : 'Overview';
+document.body.classList.toggle('manual-view-mode', targetView === 'manual' || targetView === 'manualWorkout');
+if(targetView==='manual'){ const playerSelect=$('manualPlayerSelect'); if(playerSelect){ if(isCoach){ playerSelect.parentElement.style.display='block'; playerSelect.innerHTML=participants.map(p=>`<option value="${p.code}">${p.name}</option>`).join(''); playerSelect.value=manualCurrentPlayer || (participants.length>0 ? participants[0].code : ''); loadPlayerManualPages(playerSelect.value); } else { playerSelect.parentElement.style.display='none'; loadPlayerManualPages(current.code); } } else if(!isCoach){ loadPlayerManualPages(current.code); } }
+		if(targetView==='manualWorkout'){ const playerField=$('manualWorkoutPlayerField'); const playerSelect=$('manualWorkoutPlayerSelect'); if(playerField){ playerField.style.display = isCoach ? 'flex' : 'none'; } if(playerSelect){ if(isCoach){ playerSelect.innerHTML = participants.map(member => `<option value="${member.code}">${sheetEscape(member.name)}</option>`).join(''); const storedValue = localStorage.getItem('smartGymManualWorkoutSelectedPlayer') || localStorage.getItem('smartGymHistorySelectedPlayer') || participants[0]?.code || current?.code || ''; playerSelect.value = participants.some(member => member.code === storedValue) ? storedValue : (participants[0]?.code || current?.code || ''); if(playerSelect.value){ localStorage.setItem('smartGymManualWorkoutSelectedPlayer', playerSelect.value); localStorage.setItem('smartGymHistorySelectedPlayer', playerSelect.value); } playerSelect.onchange = () => { localStorage.setItem('smartGymManualWorkoutSelectedPlayer', playerSelect.value); localStorage.setItem('smartGymHistorySelectedPlayer', playerSelect.value); loadManualWorkoutForPlayer(playerSelect.value); }; } else { playerSelect.innerHTML = `<option value="${current?.code || ''}">${sheetEscape(current?.name || 'Current player')}</option>`; playerSelect.value = current?.code || ''; playerSelect.onchange = null; } } loadManualWorkoutForPlayer(isCoach ? playerSelect?.value : current?.code); renderPageNav(); }
+if(targetView==='coachMembers'){ renderCoachMemberPage(); }
+if(targetView==='painMap'){ renderPainMapUI(); }
+if(targetView==='painMapHistory'){ renderPainMapHistory(); }
+if(targetView==='history'){ const historyDatePicker=$('historyDatePicker'); const historyPlayerSelect=$('historyPlayerSelect'); if(historyDatePicker && !historyDatePicker.value) historyDatePicker.value=new Date().toISOString().slice(0,10); if(historyPlayerSelect){ if(isCoach){ historyPlayerSelect.parentElement.style.display='block'; historyPlayerSelect.innerHTML='<option value="all">All players</option>' + participants.map(p=>`<option value="${p.code}">${p.name}</option>`).join(''); const storedPlayer = localStorage.getItem('smartGymHistorySelectedPlayer') || localStorage.getItem('smartGymManualWorkoutSelectedPlayer') || 'all'; historyPlayerSelect.value = participants.some(member => member.code === storedPlayer) ? storedPlayer : 'all'; if(historyPlayerSelect.value && historyPlayerSelect.value !== 'all'){ localStorage.setItem('smartGymHistorySelectedPlayer', historyPlayerSelect.value); localStorage.setItem('smartGymManualWorkoutSelectedPlayer', historyPlayerSelect.value); } else { localStorage.setItem('smartGymHistorySelectedPlayer', 'all'); } historyPlayerSelect.onchange = () => { localStorage.setItem('smartGymHistorySelectedPlayer', historyPlayerSelect.value); localStorage.setItem('smartGymManualWorkoutSelectedPlayer', historyPlayerSelect.value === 'all' ? (participants[0]?.code || current?.code || '') : historyPlayerSelect.value); renderHistoryPage(); }; } else { historyPlayerSelect.parentElement.style.display='none'; historyPlayerSelect.value = current?.code || ''; } } renderHistoryPage(); }
+}
+function normalizeCode(value){ const digits=String(value ?? '').replace(/\D/g,''); return digits.length ? digits.padStart(4,'0').slice(-4) : ''; }
+		const publishedCodeOwners={'9046':'Mohamed El Ashqar','9929':'Zeina Amer','5709':'Ferial Ashraf','7047':'Moaz Korain','0452':'Sara Ayman','6090':'Mariam Ayman','7852':'Ali Ehab','5416':'Osama Zaki','0689':'Hassan Atef','1681':'Mohamed Ashraf','3024':'Tayem Mohamed','2006':'Aamer Edris','1567':'Abdullah Abushabab','0908':'Ahmed Osama','7582':'Ali Sherif','9063':'Ann Asem','1486':'Hamza Basel','7930':'Malak Ismail','8649':'Mohanad Shaban','2678':'Moutaz Wael','2206':'Omar Abushabab','7643':'Omar Wael','4188':'Retage Ramadan','4046':'Seif Soliman','0778':'Marawn Mohamed','0486':'Salma Karim'};
+		function login(code){ const normalized=normalizeCode(code); const found=participants.find(p=>normalizeCode(p.code)===normalized || publishedCodeOwners[normalized]===p.name); if(found){ current=found; isCoach=false; } else if(normalizeCode(coach.code)===normalized || normalized==='4516'){ current=coach; isCoach=true; } else { notify('Code not recognized. Please check and try again.'); return; } $('loginScreen').classList.add('hidden'); $('loadingScreen').classList.remove('hidden'); setTimeout(()=>{ $('loadingScreen').classList.add('hidden'); $('app').classList.remove('hidden'); $('adminOpen').classList.add('hidden'); $('coachManage').classList.add('hidden'); $('attendanceNav').classList.remove('hidden'); updateCoachOnlyNavigation(); renderPageNav(); render(); showView('dashboard'); if(isCoach){ notify('Coach access granted.'); } },450); }
+		$('loginForm').onsubmit=e=>{e.preventDefault(); login($('loginCode').value)}; refreshTimeAndDate(); setInterval(refreshTimeAndDate,60000);
+		$('coachGenerateMemberCode').onclick=generateCoachMemberCode;
+		$('coachCreateMember').onclick=createCoachMember;
+		window.addEventListener('load',()=>{ updateCoachOnlyNavigation(); renderPageNav(); });
+		// ===== HISTORY SYSTEM =====
+		const historyKey='smartGymHistory'; const historyBackupKey='smartGymHistoryBackup'; let workoutHistory=readStored(historyKey,historyBackupKey,[]); const ensureHistory=()=>{ if(!Array.isArray(workoutHistory)) workoutHistory=[]; };
+		ensureHistory(); const addToHistory=(memberId, memberName, exercise, muscleGroup, sets, reps, weight, duration, notes, date, weights=null)=>{ ensureHistory(); const setCount=Number(sets) || 1; const weightArray=weights && Array.isArray(weights) ? weights.map(w=>Number(w)||0) : Array(setCount).fill(Number(weight)||0); for(let i=0; i<setCount; i++){ const setWeight=weightArray[i] || Number(weight) || 0; workoutHistory.push({id:Date.now()+Math.random()+i, memberId, memberName, exercise, muscleGroup, setNumber: i+1, totalSets: setCount, reps: Number(reps) || 0, weight: setWeight, duration: i===0 ? Number(duration) || 0 : 0, notes: i===0 ? String(notes || '') : '', date: date || new Date().toISOString().split('T')[0], timestamp: new Date().toISOString()}); } const serialized=JSON.stringify(workoutHistory); try{ localStorage.setItem(historyKey,serialized); localStorage.setItem(historyBackupKey,serialized); } catch(e){} syncRemoteState(); };
+		const calculateStats=(records)=>{ if(!records.length) return {totalWorkouts:0, totalVolume:0, totalDuration:0, avgWeight:0}; const totalWorkouts=records.length; const totalVolume=records.reduce((sum,r)=>(sum + (r.reps || 1) * (r.weight || 0)),0); const totalDuration=records.reduce((sum,r)=>sum + (r.duration || 0),0); const totalWeight=records.reduce((sum,r)=>sum + (r.weight || 0),0); const avgWeight=records.length ? (totalWeight / records.length).toFixed(1) : 0; return {totalWorkouts, totalVolume, totalDuration, avgWeight}; };
+		const renderHistory=()=>{ ensureHistory(); const selectedMemberId=$('historyPlayerSelect')?.value; const selectedDate=$('historyDateFilter')?.value; let filtered=workoutHistory.slice().reverse(); const displayMembers=isCoach ? participants : [current]; $('historyPlayerSelect').innerHTML=`<option value="">All players</option>${displayMembers.map(m=>`<option value="${sheetEscape(m.code)}">${sheetEscape(m.name)}</option>`).join('')}`; $('historyPlayerSelect').value=selectedMemberId || ''; if(!isCoach && current) filtered=filtered.filter(r=>r.memberId===current.code); else if(selectedMemberId) filtered=filtered.filter(r=>r.memberId===selectedMemberId); if(selectedDate) filtered=filtered.filter(r=>r.date===selectedDate); const stats=calculateStats(filtered); $('historyStats').innerHTML=`<div class="stat" style="cursor:default"><div class="stat-top"><span>TOTAL SETS</span><span class="stat-icon">▦</span></div><strong>${stats.totalWorkouts}</strong><small>Sets logged</small></div><div class="stat" style="cursor:default"><div class="stat-top"><span>TOTAL VOLUME</span><span class="stat-icon">⚙</span></div><strong>${(stats.totalVolume/1000).toFixed(1)}k</strong><small>(Weight × Reps) per set</small></div><div class="stat" style="cursor:default"><div class="stat-top"><span>TOTAL DURATION</span><span class="stat-icon">⏱</span></div><strong>${stats.totalDuration}</strong><small>Minutes trained</small></div><div class="stat" style="cursor:default"><div class="stat-top"><span>AVG WEIGHT</span><span class="stat-icon">📊</span></div><strong>${stats.avgWeight} kg</strong><small>Average per lift</small></div>`; if(!filtered.length){ $('historyList').innerHTML='<p style="text-align:center;color:var(--muted);padding:40px 20px">No training history found. Start logging your sessions!</p>'; return; } const groupedByExerciseAndDate={}; filtered.forEach(record=>{ const key=record.date+'|'+record.exercise; if(!groupedByExerciseAndDate[key]) groupedByExerciseAndDate[key]=[]; groupedByExerciseAndDate[key].push(record); }); $('historyList').innerHTML=Object.entries(groupedByDate).map(([date,records])=>{ const dateObj=new Date(date+'T00:00:00'); const dateStr=dateObj.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric', year:'numeric'}); const dayStats=calculateStats(records); return `<div style="margin-bottom:32px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h3 style="font-size:20px;margin:0;font-family:'Barlow Condensed'">${exercise}</h3><div style="color:var(--muted);font-size:12px">${dateStr} · ${records[0]?.muscleGroup || 'Unknown'}</div></div>${records.map((r,idx)=>`<div class="session-row" style="border-top:1px solid var(--line);padding:12px 0;display:grid;grid-template-columns:auto 1fr auto;gap:15px;align-items:center"><div style="text-align:center"><div style="font-weight:700;color:var(--red);font-size:12px">SET ${r.setNumber}</div><div style="color:var(--muted);font-size:10px">of ${r.totalSets}</div></div><div><div style="font-weight:700">Reps ${r.reps}${r.weight ? ' @ ' + r.weight + ' kg' : ''}</div><div style="color:var(--muted);font-size:11px;margin-top:3px">Load: ${(r.weight || 0) * (r.reps || 1)} kg</div>${r.notes && r.setNumber===1 ? `<div style="color:var(--red);margin-top:6px;font-size:11px">💭 ${r.notes}</div>` : ''}</div><div>${isCoach ? `<button class="danger" data-delete-history="${r.id}" style="font-size:10px;padding:6px 8px">Delete</button>` : ''}</div></div>`).join('')}</div>`; }).join(''); document.querySelectorAll('[data-delete-history]').forEach(btn=>btn.onclick=()=>{ const recordId=Number(btn.dataset.deleteHistory); if(confirm('Delete this workout record?')){ workoutHistory=workoutHistory.filter(r=>r.id!==recordId); const serialized=JSON.stringify(workoutHistory); try{ localStorage.setItem(historyKey,serialized); localStorage.setItem(historyBackupKey,serialized); } catch(e){} syncRemoteState(); renderHistory(); notify('Workout record deleted.'); } }); };
+		const openLogWorkout=(memberId=null)=>{ ensureHistory(); const now=new Date().toISOString().split('T')[0]; $('logWorkoutDate').value=now; $('logWorkoutMember').disabled=!isCoach; $('logWorkoutMember').innerHTML=isCoach ? participants.map((p,i)=>`<option value="${p.code}">${p.name}</option>`).join('') : `<option value="${current.code}">${current.name}</option>`; if(memberId) $('logWorkoutMember').value=memberId; else $('logWorkoutMember').value=current.code; $('logWorkoutExercise').value=''; $('logWorkoutSets').value='4'; $('logWorkoutReps').value='8'; $('logWorkoutWeight').value='0'; $('logWorkoutDuration').value='30'; $('logWorkoutNotes').value=''; $('logWorkoutWrap').classList.remove('hidden'); };
+		if($('logWorkout')) $('logWorkout').onclick=()=>openLogWorkout(); if($('closeLogWorkout')) $('closeLogWorkout').onclick=()=>$('logWorkoutWrap').classList.add('hidden'); if($('cancelLogWorkout')) $('cancelLogWorkout').onclick=()=>$('logWorkoutWrap').classList.add('hidden'); if($('saveLogWorkout')) $('saveLogWorkout').onclick=()=>{ const memberId=$('logWorkoutMember').value; const memberName=participants.find(p=>p.code===memberId)?.name || current.name; const exercise=$('logWorkoutExercise').value.trim(); if(!exercise){ notify('Enter exercise name.'); return; } addToHistory(memberId, memberName, exercise, $('logWorkoutMuscle').value, $('logWorkoutSets').value, $('logWorkoutReps').value, $('logWorkoutWeight').value, $('logWorkoutDuration').value, $('logWorkoutNotes').value, $('logWorkoutDate').value); $('logWorkoutWrap').classList.add('hidden'); if($('historyPlayerSelect') && $('historyList') && $('historyStats')) renderHistory(); notify('Session logged successfully!'); };
+		document.querySelectorAll('.nav button,[data-view-link]').forEach(btn=>btn.onclick=()=>showView(btn.dataset.view || btn.dataset.viewLink));
+		const manualWorkoutStorageKey='smartGymManualWorkoutTable';
+		const getManualWorkoutStorageKey=playerCode=>playerCode ? `${manualWorkoutStorageKey}_${playerCode}` : manualWorkoutStorageKey;
+		const getManualWorkoutBackupKey=playerCode=>`${getManualWorkoutStorageKey(playerCode)}Backup`;
+		const manualWorkoutHistoryKey='smartGymManualWorkoutHistory';
+		const defaultManualWorkoutHeaders=['Date','Exercise','Primary Focus','Sets','Reps','Set 1 Weight','Set 2 Weight','Set 3 Weight'];
+		const defaultManualWorkoutRows=[
+			['2026-08-31','Barbell Bench Press','Chest','4','8','85 kg'],
+			['2026-09-02','Pull Ups','Back','4','10','Bodyweight'],
+			['2026-09-04','Overhead Press','Shoulders','3','8','60 kg'],
+			['2026-09-06','Romanian Deadlift','Hamstrings','3','8','90 kg']
+		];
+		function ensureManualWorkoutWeightColumns(state){
+			if(!state || !Array.isArray(state.headers)) return state;
+			const oldWeightIndex=state.headers.findIndex(header=>String(header).trim().toLowerCase()==='weight');
+			if(oldWeightIndex >= 0) state.headers[oldWeightIndex]='Set 1 Weight';
+			const existingWeightColumns=new Set(state.headers.map(header=>String(header).trim().toLowerCase()));
+			for(let setNumber=1; setNumber<=3; setNumber++){
+				const header=`Set ${setNumber} Weight`;
+				if(!existingWeightColumns.has(header.toLowerCase())){ state.headers.push(header); (state.rows || []).forEach(row=>row.push('')); }
+			}
+			(state.rows || []).forEach(row=>{ while(row.length<state.headers.length) row.push(''); });
+			return state;
+		}
+		function getManualWorkoutState(playerCode=null){
+			try {
+				const storageKey=getManualWorkoutStorageKey(playerCode);
+				const saved=JSON.parse(localStorage.getItem(storageKey) || localStorage.getItem(getManualWorkoutBackupKey(playerCode)) || localStorage.getItem(manualWorkoutStorageKey) || localStorage.getItem(manualWorkoutStorageKey+'Backup') || 'null');
+				if(saved && Array.isArray(saved.headers) && Array.isArray(saved.rows)){
+					ensureManualWorkoutWeightColumns(saved);
+					const originalHeaders=saved.headers.slice();
+					const restIndex=originalHeaders.findIndex(header=>String(header).trim().toLowerCase()==='rest');
+					const notesIndex=originalHeaders.findIndex(header=>String(header).trim().toLowerCase()==='notes');
+					if(!saved.notes && notesIndex >= 0) saved.notes=saved.rows.map(row=>row[notesIndex]).find(value=>String(value || '').trim()) || '';
+					if(restIndex >= 0 || notesIndex >= 0){
+						saved.headers=originalHeaders.filter((header,index)=>index!==restIndex && index!==notesIndex);
+						saved.rows=saved.rows.map(row=>saved.headers.map(header=>row[originalHeaders.indexOf(header)] ?? ''));
+					}
+					saved.notes=saved.notes || 'Control the tempo';
+					return saved;
+				}
+			} catch(error) {}
+			return { headers:[...defaultManualWorkoutHeaders], rows:defaultManualWorkoutRows.map(row=>[...row]), notes:'Control the tempo' };
+		}
+		let manualWorkoutState=getManualWorkoutState();
+		let manualWorkoutSaveTimer=null;
+		let manualWorkoutTyping=false;
+		let manualWorkoutTypingTimer=null;
+		function hasManualWorkoutInputFocus(){
+			const activeElement = document.activeElement;
+			if(!activeElement) return false;
+			const activeManualWorkoutCell = activeElement && activeElement.closest && activeElement.closest('#manualWorkoutTable');
+			const activeManualWorkoutHeader = activeElement.classList && activeElement.classList.contains('manual-workout-header');
+			const activeManualWorkoutNote = activeElement && activeElement.closest && activeElement.closest('#manualWorkoutNotes');
+			const manualWorkoutTableFocusWithin = !!(document.querySelector && document.querySelector('#manualWorkoutTable:focus-within'));
+			const manualWorkoutNoteFocus = !!(document.querySelector && document.querySelector('#manualWorkoutNotes:focus'));
+			return !!activeManualWorkoutCell || !!activeManualWorkoutHeader || !!activeManualWorkoutNote || manualWorkoutTableFocusWithin || manualWorkoutNoteFocus;
+		}
+		function markManualWorkoutTyping(active){
+			manualWorkoutTyping = active;
+			if(manualWorkoutTypingTimer) clearTimeout(manualWorkoutTypingTimer);
+			if(active){
+				manualWorkoutTypingTimer = setTimeout(()=>{
+					if(!hasManualWorkoutInputFocus()) manualWorkoutTyping = false;
+				}, 900);
+			}
+		}
+		function saveManualWorkoutState(){
+			markManualWorkoutTyping(true);
+			if(manualWorkoutSaveTimer) clearTimeout(manualWorkoutSaveTimer);
+			manualWorkoutSaveTimer=setTimeout(()=>{
+				if(!hasManualWorkoutInputFocus()) markManualWorkoutTyping(false);
+				try { const playerCode=isCoach ? $('manualWorkoutPlayerSelect')?.value : current?.code; const storageKey=getManualWorkoutStorageKey(playerCode); localStorage.setItem(storageKey, JSON.stringify(manualWorkoutState)); localStorage.setItem(getManualWorkoutBackupKey(playerCode), JSON.stringify(manualWorkoutState)); } catch(error) {}
+				queueRemoteSync();
+			}, 350);
+		}
+		function getManualWorkoutHistory(){
+			try {
+				const saved=JSON.parse(localStorage.getItem(manualWorkoutHistoryKey) || 'null');
+				return Array.isArray(saved) ? saved : [];
+			} catch(error) { return []; }
+		}
+		function saveManualWorkoutHistory(entries, sync=false){
+			try { localStorage.setItem(manualWorkoutHistoryKey, JSON.stringify(entries)); } catch(error) {}
+			if(sync) queueRemoteSync();
+		}
+		let dashboardWorkoutSaveTimer=null;
+		function saveDashboardWorkoutToHistory(member, date){
+			if(!member) return;
+			ensureHistory();
+			ensurePlan(member);
+			const entries=getManualWorkoutHistory();
+			const dashboardEntries=member.workouts.filter(item=>String(item.name || '').trim()).map(item=>({
+				id:`dashboard-${member.code}-${date}-${item.name}`,
+				playerCode:member.code, playerName:member.name, date,
+				exercise:String(item.name).trim(), primaryFocus:String(item.detail || '').trim(),
+				sets:String(item.sets || '').trim(), reps:String(item.reps || '').trim(),
+				weight:item.weights?.map(weight=>weight ? `${weight} kg` : 'Bodyweight').join(', ') || 'Bodyweight', rest:String(item.rest || '').trim(),
+				notes:String(item.notes || '').trim(), source:'dashboard', savedAt:new Date().toISOString()
+			}));
+			const kept=entries.filter(entry=>!(entry.source==='dashboard' && entry.playerCode===member.code && entry.date===date));
+			saveManualWorkoutHistory([...kept,...dashboardEntries],true);
+			workoutHistory=workoutHistory.filter(record=>!(record.source==='dashboard' && record.memberId===member.code && record.date===date));
+			member.workouts.filter(item=>String(item.name || '').trim()).forEach(item=>{
+				ensureWorkout(item);
+				item.weights.forEach((weight,setIndex)=>workoutHistory.push({
+					id:`dashboard-${member.code}-${date}-${item.name}-${setIndex}`,
+					memberId:member.code, memberName:member.name, exercise:String(item.name).trim(),
+					muscleGroup:item.muscle || String(item.detail || '').split(' · ')[0] || 'Full body',
+					setNumber:setIndex+1, totalSets:item.sets, reps:Number(item.reps)||0, weight:Number(weight)||0,
+					duration:0, notes:String(item.notes || '').trim(), date, source:'dashboard', timestamp:new Date().toISOString()
+				}));
+			});
+			const historySerialized=JSON.stringify(workoutHistory);
+			try { localStorage.setItem(historyKey,historySerialized); localStorage.setItem(historyBackupKey,historySerialized); } catch(error) {}
+			persist(storageKey,backupKey,participants);
+			queueRemoteSync();
+			if($('dashboardWorkoutSaveStatus')) $('dashboardWorkoutSaveStatus').textContent='Saved just now';
+		}
+		function scheduleDashboardWorkoutSave(member, date){
+			if(dashboardWorkoutSaveTimer) clearTimeout(dashboardWorkoutSaveTimer);
+			if($('dashboardWorkoutSaveStatus')) $('dashboardWorkoutSaveStatus').textContent='Saving...';
+			dashboardWorkoutSaveTimer=setTimeout(()=>saveDashboardWorkoutToHistory(member,date),450);
+		}
+		function addDashboardSetWeightInputs(editor, member){
+			if(!editor || !member || document.activeElement?.closest('#dashboardWorkoutEditor')) return;
+			editor.querySelectorAll('[data-dashboard-field="weight"]').forEach(weightInput=>{
+				const item=member.workouts[Number(weightInput.dataset.dashboardIndex)];
+				if(!item) return;
+				ensureWorkout(item);
+				const wrapper=document.createElement('div');
+				wrapper.className='dashboard-set-weights';
+				wrapper.style.cssText='display:flex;flex-wrap:wrap;gap:4px';
+				item.weights.forEach((weight,setIndex)=>{
+					const input=setIndex===0 ? weightInput : document.createElement('input');
+					input.type='number';
+					input.min='0';
+					input.step='0.5';
+					input.value=weight;
+					input.dataset.dashboardSetWeight=String(setIndex);
+					if(setIndex===0) input.removeAttribute('data-dashboard-field');
+					input.setAttribute('aria-label',`Set ${setIndex+1} weight in kilograms`);
+					input.style.width='78px';
+					input.oninput=()=>{
+						item.weights[setIndex]=Number(input.value)||0;
+						item.weight=item.weights[0]||0;
+						persist(storageKey,backupKey,participants);
+						queueRemoteSync();
+						scheduleDashboardWorkoutSave(member,$('dashboardWorkoutDate')?.value || new Date().toISOString().slice(0,10));
+					};
+					const label=document.createElement('label');
+					label.textContent=`Set ${setIndex+1}`;
+					label.style.cssText='display:grid;gap:3px;color:#77736e;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase';
+					label.appendChild(input);
+					wrapper.appendChild(label);
+				});
+				weightInput.replaceWith(wrapper);
+			});
+		}
+		function renderDashboardWorkoutEditor(){
+			const editor=$('dashboardWorkoutEditor');
+			if(!editor || !current) return;
+			if(document.activeElement?.closest('#dashboardWorkoutEditor')) return;
+			const playerCode=isCoach ? (localStorage.getItem('smartGymDashboardPlayer') || participants[0]?.code) : current.code;
+			const member=isCoach ? participants.find(item=>item.code===playerCode) : current;
+			if(!member){ editor.innerHTML='<div class="panel-sub">No player available.</div>'; return; }
+			const dateKey=new Date().toISOString().slice(0,10);
+			const dashboardDateKey=`smartGymDashboardWorkoutDate_${member.code}`;
+			const sessionDate=localStorage.getItem(dashboardDateKey) || dateKey;
+			const playerPicker=isCoach ? `<label style="display:block;margin-bottom:12px">Player<select id="dashboardWorkoutPlayer" style="margin-top:5px"><option value="">Choose player</option>${participants.map(item=>`<option value="${sheetEscape(item.code)}" ${item.code===member.code?'selected':''}>${sheetEscape(item.name)}</option>`).join('')}</select></label>` : '';
+			const setCount=Math.max(1,...member.workouts.map(item=>Number(item.sets)||1));
+			editor.style.setProperty('--dashboard-set-columns',setCount);
+			const setHeaders=Array.from({length:setCount},(_,index)=>`<span>Set ${index+1} Weight</span>`).join('');
+			editor.innerHTML=`${playerPicker}<label style="display:block;margin-bottom:12px">Session date<input id="dashboardWorkoutDate" type="date" value="${sheetEscape(sessionDate)}" style="margin-top:5px"></label><div class="dashboard-workout-columns"><span>Exercise name</span><span>Training focus</span><span>Sets</span><span>Reps</span>${setHeaders}</div><div style="display:grid;gap:8px">${member.workouts.map((item,index)=>{ ensureWorkout(item); const itemSetCount=Math.max(1,Number(item.sets)||1); const weights=Array.from({length:setCount},(_,setIndex)=>setIndex<itemSetCount ? `<input data-dashboard-set-weight="${setIndex}" data-dashboard-index="${index}" type="number" min="0" step="0.5" value="${item.weights[setIndex] ?? 0}" aria-label="Set ${setIndex+1} weight in kilograms">` : '<span class="dashboard-empty-set" aria-hidden="true"></span>').join(''); return `<div class="dashboard-workout-row"><input data-dashboard-field="name" data-dashboard-index="${index}" value="${sheetEscape(item.name)}" aria-label="Exercise name"><input data-dashboard-field="detail" data-dashboard-index="${index}" value="${sheetEscape(item.detail || '')}" aria-label="Training focus"><input data-dashboard-field="sets" data-dashboard-index="${index}" type="number" min="1" value="${itemSetCount}" aria-label="Sets"><input data-dashboard-field="reps" data-dashboard-index="${index}" type="number" min="1" value="${Number(item.reps)||1}" aria-label="Reps">${weights}</div>`; }).join('')}</div><button id="dashboardAddToHistory" class="primary-btn" type="button" style="margin-top:16px">ADD TO HISTORY</button>`;
+			editor.querySelectorAll('[data-dashboard-field]').forEach(input=>{ input.oninput=()=>{ const item=member.workouts[Number(input.dataset.dashboardIndex)]; const field=input.dataset.dashboardField; item[field]=field==='sets'||field==='reps' ? Number(input.value)||0 : input.value; ensureWorkout(item); window.setTimeout(()=>{ persist(storageKey,backupKey,participants); queueRemoteSync(); },0); scheduleDashboardWorkoutSave(member,$('dashboardWorkoutDate')?.value || dateKey); }; if(input.dataset.dashboardField==='sets') input.onblur=()=>window.setTimeout(()=>renderDashboardWorkoutEditor(),150); });
+			editor.querySelectorAll('[data-dashboard-set-weight]').forEach(input=>input.oninput=()=>{ const item=member.workouts[Number(input.dataset.dashboardIndex)]; const setIndex=Number(input.dataset.dashboardSetWeight); ensureWorkout(item); item.weights[setIndex]=Number(input.value)||0; item.weight=item.weights[0]||0; persist(storageKey,backupKey,participants); queueRemoteSync(); scheduleDashboardWorkoutSave(member,$('dashboardWorkoutDate')?.value || dateKey); });
+			if($('dashboardWorkoutDate')) $('dashboardWorkoutDate').onchange=()=>{ const selectedDate=$('dashboardWorkoutDate').value || dateKey; localStorage.setItem(dashboardDateKey,selectedDate); scheduleDashboardWorkoutSave(member,selectedDate); };
+			if($('dashboardWorkoutPlayer')) $('dashboardWorkoutPlayer').onchange=()=>{ localStorage.setItem('smartGymDashboardPlayer',$('dashboardWorkoutPlayer').value); renderDashboardWorkoutEditor(); };
+			if($('dashboardAddToHistory')) $('dashboardAddToHistory').onclick=()=>{ saveDashboardWorkoutToHistory(member,$('dashboardWorkoutDate')?.value || dateKey); notify('Workout added to history and database sync queued.'); };
+		}
+		function getManualWorkoutDrafts(){
+			const drafts={};
+			participants.forEach(member=>{ const draft=getManualWorkoutState(member.code); if(draft) drafts[member.code]=draft; });
+			return drafts;
+		}
+		function loadManualWorkoutForPlayer(playerCode){
+			manualWorkoutState=getManualWorkoutState(playerCode);
+			renderManualWorkoutTable();
+		}
+		function captureManualWorkoutTableState(){
+			const table=$('manualWorkoutTable');
+			if(!table) return;
+			const headers=Array.from(table.querySelectorAll('thead .manual-workout-header')).map(input => input.value || 'Custom');
+			const rows=[];
+			table.querySelectorAll('tbody tr').forEach(row=>{
+				const cells=Array.from(row.querySelectorAll('input[data-workout-row]'));
+				if(!cells.length) return;
+				const rowValues=Array(headers.length).fill('');
+				cells.forEach(input=>{
+					const colIndex=Number(input.dataset.workoutCol);
+					if(Number.isFinite(colIndex)) rowValues[colIndex]=input.value;
+				});
+				rows.push(rowValues);
+			});
+			manualWorkoutState={ headers: headers.length ? headers : [...defaultManualWorkoutHeaders], rows: rows.length ? rows : [[...Array(defaultManualWorkoutHeaders.length).fill('')]], notes: ($('manualWorkoutNotes')?.value || '').trim() };
+			try { const playerCode=isCoach ? $('manualWorkoutPlayerSelect')?.value : current?.code; const storageKey=getManualWorkoutStorageKey(playerCode); localStorage.setItem(storageKey, JSON.stringify(manualWorkoutState)); localStorage.setItem(getManualWorkoutBackupKey(playerCode), JSON.stringify(manualWorkoutState)); } catch(error) {}
+		}
+		function syncManualWorkoutHistoryToCurrentView(){
+			const playerSelect=$('manualWorkoutPlayerSelect');
+			const historyPlayerSelect=$('historyPlayerSelect');
+			if(playerSelect && isCoach){
+				const selected=localStorage.getItem('smartGymManualWorkoutSelectedPlayer') || localStorage.getItem('smartGymHistorySelectedPlayer') || participants[0]?.code || current?.code || '';
+				playerSelect.value = participants.some(member => member.code === selected) ? selected : (participants[0]?.code || current?.code || '');
+				if(playerSelect.value){ localStorage.setItem('smartGymManualWorkoutSelectedPlayer', playerSelect.value); }
+			}
+			if(historyPlayerSelect && isCoach){
+				const selected=localStorage.getItem('smartGymHistorySelectedPlayer') || localStorage.getItem('smartGymManualWorkoutSelectedPlayer') || 'all';
+				historyPlayerSelect.value = selected === 'all' || participants.some(member => member.code === selected) ? selected : 'all';
+				if(historyPlayerSelect.value && historyPlayerSelect.value !== 'all'){ localStorage.setItem('smartGymHistorySelectedPlayer', historyPlayerSelect.value); }
+			}
+			renderHistoryPage();
+		}
+		function saveManualWorkoutToHistory(){
+			if(!current) return;
+			captureManualWorkoutTableState();
+			const selectedPlayerCode = isCoach && $('manualWorkoutPlayerSelect') ? $('manualWorkoutPlayerSelect').value : current.code;
+			if(isCoach && $('manualWorkoutPlayerSelect')) localStorage.setItem('smartGymManualWorkoutSelectedPlayer', selectedPlayerCode);
+			if(isCoach) localStorage.setItem('smartGymHistorySelectedPlayer', selectedPlayerCode);
+			const selectedPlayer = participants.find(member => member.code === selectedPlayerCode) || current;
+			const entries=getManualWorkoutHistory();
+			const rows=Array.isArray(manualWorkoutState.rows) ? manualWorkoutState.rows : [];
+			const newEntries=[];
+			rows.forEach((row,index)=>{
+				if(!Array.isArray(row)) return;
+				const dateValue=String(row[0] || '').trim();
+				if(!dateValue) return;
+				const exerciseValue=String(row[1] || '').trim();
+				if(!exerciseValue) return;
+				const weightValues=manualWorkoutState.headers.map((header,colIndex)=>/^Set \d+ Weight$/i.test(String(header).trim()) ? String(row[colIndex] || '').trim() : '').filter(Boolean).join(', ');
+				newEntries.push({
+					id:`${selectedPlayer.code}-${dateValue}-${index}-${Date.now()}`,
+					playerCode:selectedPlayer.code,
+					playerName:selectedPlayer.name,
+					date:dateValue,
+					exercise:exerciseValue,
+					primaryFocus:String(row[2] || '').trim(),
+					sets:String(row[3] || '').trim(),
+					reps:String(row[4] || '').trim(),
+					weight:weightValues,
+					rest:String(row[6] || '').trim(),
+					notes:String(manualWorkoutState.notes || '').trim(),
+					savedAt:new Date().toISOString()
+				});
+			});
+			if(!newEntries.length){ notify('Add at least one row with a date and exercise first.'); return; }
+			const mergedEntries=[...entries.filter(entry => !newEntries.some(newEntry => newEntry.date === entry.date && newEntry.playerCode === entry.playerCode && newEntry.exercise === entry.exercise && newEntry.savedAt === entry.savedAt)), ...newEntries];
+			saveManualWorkoutHistory(mergedEntries,true);
+			const targetDate = newEntries[0]?.date || new Date().toISOString().slice(0,10);
+			if($('historyDatePicker')) $('historyDatePicker').value = targetDate;
+			if($('manualWorkoutPlayerSelect') && isCoach) $('manualWorkoutPlayerSelect').value = selectedPlayerCode;
+			syncManualWorkoutHistoryToCurrentView();
+			notify('Saved to history.');
+		}
+		function removeManualWorkoutHistoryEntry(entryId){
+			const entries=getManualWorkoutHistory();
+			const entry=entries.find(item=>String(item.id)===String(entryId));
+			if(!entry || (!isCoach && entry.playerCode !== current?.code)) return;
+			saveManualWorkoutHistory(entries.filter(item=>String(item.id)!==String(entryId)),true);
+			renderHistoryPage();
+			notify('Removed from history.');
+		}
+		function renderHistoryPage(){
+			const list=$('historyList');
+			const datePicker=$('historyDatePicker');
+			const playerSelect=$('historyPlayerSelect');
+			if(!list) return;
+			const selectedDate=(datePicker && datePicker.value) || new Date().toISOString().slice(0,10);
+			if(datePicker && !datePicker.value) datePicker.value=selectedDate;
+			let entries=getManualWorkoutHistory().filter(entry => entry.date === selectedDate);
+			if(!isCoach && current){ entries = entries.filter(entry => entry.playerCode === current.code); }
+			if(playerSelect){
+				const selectedPlayer = playerSelect.value || (isCoach ? (localStorage.getItem('smartGymHistorySelectedPlayer') || 'all') : current.code);
+				playerSelect.innerHTML = isCoach ? '<option value="all">All players</option>' + participants.map(p=>`<option value="${p.code}">${p.name}</option>`).join('') : `<option value="${current.code}">${current.name}</option>`;
+				playerSelect.value = isCoach ? (participants.some(member => member.code === selectedPlayer) ? selectedPlayer : 'all') : current.code;
+				if(isCoach && playerSelect.value && playerSelect.value !== 'all'){ entries = entries.filter(entry => entry.playerCode === playerSelect.value); localStorage.setItem('smartGymHistorySelectedPlayer', playerSelect.value); localStorage.setItem('smartGymManualWorkoutSelectedPlayer', playerSelect.value); }
+				else if(isCoach){ localStorage.setItem('smartGymHistorySelectedPlayer', 'all'); }
+			}
+			if(!entries.length){ list.innerHTML='<div style="padding:28px;text-align:center;color:#5f6368">No sessions saved for this date.</div>'; return; }
+			list.innerHTML = entries.map(entry => `
+				<div class="panel" style="padding:18px 20px;margin-bottom:14px;border:1px solid #e7e3df;border-radius:12px;background:#fff">
+					<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px">
+						<div><strong style="display:block;font-size:15px;color:#111315">${sheetEscape(entry.playerName)}</strong><span style="font-size:11px;color:#5f6368;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(entry.exercise)}</span></div>
+						<span style="padding:6px 10px;border-radius:999px;background:#f4f3f1;color:#111315;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(entry.date)}</span>
+					</div>
+					<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;font-size:12px;color:#3d4043">
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Focus</strong>${sheetEscape(entry.primaryFocus || '—')}</div>
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Sets</strong>${sheetEscape(entry.sets || '—')}</div>
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Reps</strong>${sheetEscape(entry.reps || '—')}</div>
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Weight</strong>${sheetEscape(entry.weight || '—')}</div>
+					</div>
+					${entry.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #efeae6;color:#3d4043;font-size:12px"><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Notes</strong>${sheetEscape(entry.notes)}</div>` : ''}
+					${isCoach ? `<button type="button" class="manual-mini-btn secondary" data-remove-history="${sheetEscape(entry.id)}" style="margin-top:14px">Remove entry</button>` : ''}
+				</div>
+			`).join('');
+			list.querySelectorAll('[data-remove-history]').forEach(button=>button.onclick=()=>removeManualWorkoutHistoryEntry(button.dataset.removeHistory));
+		}
+		const painMapRegions={
+			neck:{label:'Neck', muscles:['Sternocleidomastoid','Upper trapezius','Cervical extensors']},
+			shoulders:{label:'Shoulders', muscles:['Anterior deltoid','Lateral deltoid','Posterior deltoid','Rotator cuff']},
+			arms:{label:'Arms', muscles:['Biceps','Triceps','Forearms','Brachialis']},
+			back:{label:'Back', muscles:['Upper trapezius','Lats','Rhomboids','Erector spinae']},
+			core:{label:'Core', muscles:['Rectus abdominis','Obliques','Transverse abdominis','Lower abs']},
+			legs:{label:'Legs', muscles:['Quadriceps','Hamstrings','Glutes','Calves','Adductors']}
+		};
+		const painMapStorageKey='smartGymPainMapHistory';
+		const painMapStorageBackupKey='smartGymPainMapHistoryBackup';
+		let painMapSelection={ region:'shoulders', side:'right', muscle:'Lateral deltoid', severity:5 };
+		function getPainMapHistory(){
+			try {
+				const saved=JSON.parse(localStorage.getItem(painMapStorageKey) || localStorage.getItem(painMapStorageBackupKey) || 'null');
+				return Array.isArray(saved) ? saved : [];
+			} catch(error) { return []; }
+		}
+		function savePainMapHistory(entries, sync=false){
+			try {
+				localStorage.setItem(painMapStorageKey, JSON.stringify(entries));
+				localStorage.setItem(painMapStorageBackupKey, JSON.stringify(entries));
+			} catch(error) {}
+			if(sync) queueRemoteSync();
+		}
+		function setPainMapSelection(region, muscle, sideOverride){
+			const normalizedRegion = painMapRegions[region] ? region : 'shoulders';
+			const muscleList = painMapRegions[normalizedRegion]?.muscles || [];
+			painMapSelection.region = normalizedRegion;
+			painMapSelection.side = (sideOverride === 'left' || sideOverride === 'right') ? sideOverride : (painMapSelection.side === 'left' ? 'left' : 'right');
+			painMapSelection.muscle = muscle && muscleList.includes(muscle) ? muscle : (muscleList[0] || '');
+			if(!painMapSelection.severity || Number(painMapSelection.severity) < 1) painMapSelection.severity = 5;
+		}
+		function renderPainMapUI(){
+			const view=$('painMapView');
+			if(!view) return;
+			const region = painMapRegions[painMapSelection.region] ? painMapSelection.region : 'shoulders';
+			const side = painMapSelection.side === 'left' ? 'left' : 'right';
+			const muscleList = painMapRegions[region]?.muscles || [];
+			const selectedMuscle = muscleList.includes(painMapSelection.muscle) ? painMapSelection.muscle : (muscleList[0] || '');
+			painMapSelection.region = region;
+			painMapSelection.side = side;
+			painMapSelection.muscle = selectedMuscle;
+			const selectedPlayer = isCoach ? (participants.find(member => member.code === ($('painMapPlayerSelect')?.value || participants[0]?.code)) || participants[0] || current || coach) : current;
+			const playerOptions = (isCoach ? participants : [current]).filter(Boolean).map(member => `<option value="${member.code}">${sheetEscape(member.name)}</option>`).join('');
+			const regionButtonStyle=(activeRegion, labelText)=>`position:absolute;${labelText.includes('Left') ? 'left:20%' : labelText.includes('Right') ? 'right:20%' : 'left:50%;transform:translateX(-50%)'};top:${activeRegion === 'shoulders' ? '36%' : activeRegion === 'arms' ? '41%' : activeRegion === 'legs' ? '68%' : activeRegion === 'neck' ? '20%' : activeRegion === 'back' ? '43%' : '43%'};width:${activeRegion === 'neck' ? 'clamp(60px, 18vw, 72px)' : activeRegion === 'back' ? 'clamp(120px, 38vw, 170px)' : activeRegion === 'legs' ? 'clamp(110px, 30vw, 180px)' : 'clamp(84px, 22vw, 110px)'};height:${activeRegion === 'neck' ? 'clamp(24px, 7vw, 32px)' : activeRegion === 'shoulders' ? 'clamp(38px, 12vw, 52px)' : activeRegion === 'arms' ? 'clamp(100px, 26vw, 150px)' : activeRegion === 'legs' ? 'clamp(110px, 26vw, 150px)' : activeRegion === 'back' ? 'clamp(110px, 26vw, 140px)' : 'clamp(80px, 20vw, 110px)'};border-radius:${activeRegion === 'neck' ? '18px' : activeRegion === 'back' ? '26px 26px 30px 30px' : activeRegion === 'legs' ? '28px 28px 22px 22px' : '22px'};background:${painMapSelection.region === activeRegion ? '#e52f37' : '#1a1d1f'};color:#fff;font-size:clamp(9px,1.8vw,11px);font-weight:700;letter-spacing:.04em;text-transform:uppercase;display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 22px rgba(18,20,22,.14);white-space:nowrap;padding:6px 10px;border:none;`;
+			view.innerHTML=`<div class="welcome"><div><div class="eyebrow">Body PainMap</div><h1>Where does it <span>hurt?</span></h1></div></div><section class="panel" style="padding:28px"><div class="painmap-layout"><div class="painmap-figure-panel"><div class="painmap-figure-stage"><div style="position:absolute;left:50%;top:12%;transform:translateX(-50%);width:110px;height:110px;border-radius:50%;background:#1a1d1f;opacity:.94"></div><div style="position:absolute;left:50%;top:31%;transform:translateX(-50%);width:150px;height:200px;border-radius:22px 22px 28px 28px;background:#1a1d1f;opacity:.94"></div><button type="button" class="pain-region ${region==='neck' ? 'active' : ''}" data-pain-region="neck" data-pain-side="mid" style="${regionButtonStyle('neck','Neck')}">Neck</button><button type="button" class="pain-region ${region==='shoulders' && side==='left' ? 'active' : ''}" data-pain-region="shoulders" data-pain-side="left" style="${regionButtonStyle('shoulders','Left Shoulder')}">Left Shoulder</button><button type="button" class="pain-region ${region==='shoulders' && side==='right' ? 'active' : ''}" data-pain-region="shoulders" data-pain-side="right" style="${regionButtonStyle('shoulders','Right Shoulder')}">Right Shoulder</button><button type="button" class="pain-region ${region==='arms' && side==='left' ? 'active' : ''}" data-pain-region="arms" data-pain-side="left" style="${regionButtonStyle('arms','Left Arm')}">Left Arm</button><button type="button" class="pain-region ${region==='arms' && side==='right' ? 'active' : ''}" data-pain-region="arms" data-pain-side="right" style="${regionButtonStyle('arms','Right Arm')}">Right Arm</button><button type="button" class="pain-region ${region==='core' ? 'active' : ''}" data-pain-region="core" data-pain-side="mid" style="${regionButtonStyle('core','Core')}">Core</button><button type="button" class="pain-region ${region==='back' ? 'active' : ''}" data-pain-region="back" data-pain-side="mid" style="${regionButtonStyle('back','Back')}">Back</button><button type="button" class="pain-region ${region==='legs' && side==='left' ? 'active' : ''}" data-pain-region="legs" data-pain-side="left" style="${regionButtonStyle('legs','Left Leg')}">Left Leg</button><button type="button" class="pain-region ${region==='legs' && side==='right' ? 'active' : ''}" data-pain-region="legs" data-pain-side="right" style="${regionButtonStyle('legs','Right Leg')}">Right Leg</button></div></div><aside style="background:#fff;border:1px solid #ece6e1;border-radius:16px;padding:20px"><div class="eyebrow">Selected zone</div><h3 style="margin:8px 0 14px;font-size:28px;color:#111315">${painMapRegions[region].label} · ${side.charAt(0).toUpperCase()+side.slice(1)}</h3><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">${muscleList.map(muscle=>`<button type="button" class="pain-muscle-btn ${selectedMuscle===muscle ? 'active' : ''}" data-pain-muscle="${sheetEscape(muscle)}" style="padding:8px 10px;border-radius:999px;border:1px solid ${selectedMuscle===muscle ? '#e52f37' : '#d7d2ce'};background:${selectedMuscle===muscle ? '#fff1f1' : '#fff'};color:#212425;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer">${sheetEscape(muscle)}</button>`).join('')}</div><div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px"><div class="eyebrow" style="margin:0">Side</div><div style="display:flex;gap:8px"><button type="button" class="pain-side-btn ${side==='left' ? 'active' : ''}" data-pain-side="left" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid ${side==='left' ? '#e52f37' : '#d7d2ce'};background:${side==='left' ? '#fff1f1' : '#fff'};color:#212425;font-weight:700;cursor:pointer">Left</button><button type="button" class="pain-side-btn ${side==='right' ? 'active' : ''}" data-pain-side="right" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid ${side==='right' ? '#e52f37' : '#d7d2ce'};background:${side==='right' ? '#fff1f1' : '#fff'};color:#212425;font-weight:700;cursor:pointer">Right</button></div></div><div class="form-grid"><label>Player<select id="painMapPlayerSelect" style="width:100%">${playerOptions}</select></label><label>Severity<div style="display:flex;align-items:center;gap:10px"><input id="painMapSeverity" type="range" min="1" max="10" value="${painMapSelection.severity || 5}" style="width:100%"><span id="painMapSeverityValue" style="font-weight:700;color:#111315;min-width:38px;text-align:right">${painMapSelection.severity || 5}/10</span></div></label><label>Date<input id="painMapDate" type="date" value="${new Date().toISOString().slice(0,10)}" style="width:100%"></label><label class="full">Notes<textarea id="painMapNotes" rows="4" placeholder="Describe the issue, trigger, or where it radiates" style="width:100%;resize:vertical;border:1px solid #dadce0;border-radius:8px;padding:10px;font:inherit;color:#202124"></textarea></label></div><button id="savePainMapEntry" class="primary-btn" type="button" style="width:100%;margin-top:12px">Save pain map entry</button></aside></div></section>`;
+			const painRegionLayout = {
+				neck: { left: 50, top: 18, width: 82, height: 32 },
+				shoulders: { left: 28, top: 34, width: 120, height: 46, right: { left: 72, top: 34, width: 120, height: 46 } },
+				arms: { left: 16, top: 48, width: 88, height: 140, right: { left: 84, top: 48, width: 88, height: 140 } },
+				back: { left: 50, top: 42, width: 150, height: 100 },
+				core: { left: 50, top: 58, width: 110, height: 90 },
+				legs: { left: 35, top: 80, width: 92, height: 120, right: { left: 65, top: 80, width: 92, height: 120 } }
+			};
+			view.querySelectorAll('.pain-region').forEach(button => {
+				const region = button.dataset.painRegion;
+				const side = button.dataset.painSide;
+				const layout = painRegionLayout[region] || painRegionLayout.shoulders;
+				const x = side === 'left' && region === 'shoulders' ? layout.left : side === 'right' && region === 'shoulders' ? layout.right.left : side === 'left' && region === 'arms' ? layout.left : side === 'right' && region === 'arms' ? layout.right.left : side === 'left' && region === 'legs' ? layout.left : side === 'right' && region === 'legs' ? layout.right.left : layout.left;
+				const y = side === 'left' && region === 'shoulders' ? layout.top : side === 'right' && region === 'shoulders' ? layout.right.top : side === 'left' && region === 'arms' ? layout.top : side === 'right' && region === 'arms' ? layout.right.top : side === 'left' && region === 'legs' ? layout.top : side === 'right' && region === 'legs' ? layout.right.top : layout.top;
+				const width = side === 'left' && region === 'shoulders' ? layout.width : side === 'right' && region === 'shoulders' ? layout.right.width : side === 'left' && region === 'arms' ? layout.width : side === 'right' && region === 'arms' ? layout.right.width : side === 'left' && region === 'legs' ? layout.width : side === 'right' && region === 'legs' ? layout.right.width : layout.width;
+				const height = side === 'left' && region === 'shoulders' ? layout.height : side === 'right' && region === 'shoulders' ? layout.right.height : side === 'left' && region === 'arms' ? layout.height : side === 'right' && region === 'arms' ? layout.right.height : side === 'left' && region === 'legs' ? layout.height : side === 'right' && region === 'legs' ? layout.right.height : layout.height;
+				button.style.position = 'absolute';
+				button.style.left = `${x}%`;
+				button.style.top = `${y}%`;
+				button.style.width = `${width}px`;
+				button.style.height = `${height}px`;
+				button.style.transform = 'translate(-50%, -50%)';
+				button.style.border = '2px solid rgba(255,255,255,0.24)';
+				button.style.borderRadius = '22px';
+				button.style.zIndex = '12';
+				button.style.boxShadow = '0 10px 20px rgba(15,17,18,0.14)';
+				button.style.display = 'grid';
+				button.style.placeItems = 'center';
+				button.style.fontSize = '10px';
+				button.style.fontWeight = '800';
+				button.style.letterSpacing = '.08em';
+				button.style.textTransform = 'uppercase';
+				button.style.padding = '6px 8px';
+				button.style.whiteSpace = 'nowrap';
+				button.style.background = painMapSelection.region === region ? '#e52f37' : '#1a1d1f';
+				button.style.color = '#fff';
+				button.style.lineHeight = '1';
+			});
+			const playerSelect = view.querySelector('#painMapPlayerSelect');
+			if(playerSelect){
+				if(isCoach){ playerSelect.value = (selectedPlayer && selectedPlayer.code) || participants[0]?.code || current?.code || ''; }
+				else { playerSelect.value = current?.code || ''; playerSelect.disabled = true; }
+			}
+			const severityInput = view.querySelector('#painMapSeverity');
+			const severityValue = view.querySelector('#painMapSeverityValue');
+			if(severityInput && severityValue){
+				severityInput.oninput=()=>{
+					painMapSelection.severity = Number(severityInput.value) || 5;
+					severityValue.textContent = `${painMapSelection.severity}/10`;
+				};
+			}
+			view.querySelectorAll('.pain-region').forEach(button=>{
+				button.onclick=()=>{
+					setPainMapSelection(button.dataset.painRegion, undefined, button.dataset.painSide);
+					renderPainMapUI();
+				};
+			});
+			view.querySelectorAll('.pain-side-btn').forEach(button=>{
+				button.onclick=()=>{
+					painMapSelection.side = button.dataset.painSide === 'left' ? 'left' : 'right';
+					renderPainMapUI();
+				};
+			});
+			view.querySelectorAll('.pain-muscle-btn').forEach(button=>{
+				button.onclick=()=>{
+					painMapSelection.muscle = button.dataset.painMuscle || painMapSelection.muscle;
+					renderPainMapUI();
+				};
+			});
+			const savePainMapEntry=view.querySelector('#savePainMapEntry');
+			if(savePainMapEntry){
+				savePainMapEntry.onclick=()=>{
+					const playerCode = isCoach ? (playerSelect?.value || current?.code) : (current?.code || selectedPlayer?.code);
+					const player = participants.find(member => member.code === playerCode) || current || coach;
+					const severity = Number(view.querySelector('#painMapSeverity')?.value || painMapSelection.severity || 5);
+					const selectedDate=(view.querySelector('#painMapDate')?.value) || new Date().toISOString().slice(0,10);
+					const notes = (view.querySelector('#painMapNotes')?.value || '').trim();
+					if(!player || !painMapSelection.muscle){ notify('Select a muscle before saving.'); return; }
+					const entries=getPainMapHistory();
+					entries.push({
+						id:`pain-${player.code}-${region}-${painMapSelection.side}-${painMapSelection.muscle}-${selectedDate}-${Date.now()}`,
+						playerCode:player.code,
+						playerName:player.name,
+						date:selectedDate,
+						region,
+						side:painMapSelection.side,
+						muscle:painMapSelection.muscle,
+						severity,
+						notes,
+						savedAt:new Date().toISOString()
+					});
+					savePainMapHistory(entries,true);
+					renderPainMapHistory();
+					notify('PainMap entry saved.');
+				};
+			}
+		}
+		function renderPainMapHistory(){
+			const view=$('painMapHistoryView');
+			const list=$('painMapHistoryList');
+			const datePicker=$('painMapHistoryDatePicker');
+			const playerSelect=$('painMapHistoryPlayerSelect');
+			if(!view || !list) return;
+			const selectedDate=(datePicker && datePicker.value) || new Date().toISOString().slice(0,10);
+			if(datePicker && !datePicker.value) datePicker.value=selectedDate;
+			let entries=getPainMapHistory();
+			if(!isCoach && current){ entries=entries.filter(entry => entry.playerCode === current.code); }
+			if(datePicker){ entries = entries.filter(entry => entry.date === selectedDate); }
+			if(playerSelect){
+				const selectedPlayer = playerSelect.value || (isCoach ? 'all' : current.code);
+				playerSelect.innerHTML = isCoach ? '<option value="all">All players</option>' + participants.map(member => `<option value="${member.code}">${sheetEscape(member.name)}</option>`).join('') : `<option value="${current.code}">${sheetEscape(current.name)}</option>`;
+				playerSelect.value = isCoach ? (selectedPlayer || 'all') : current.code;
+				if(isCoach && playerSelect.value && playerSelect.value !== 'all'){ entries = entries.filter(entry => entry.playerCode === playerSelect.value); }
+			}
+			if(!entries.length){ list.innerHTML='<div style="padding:28px;text-align:center;color:#5f6368">No pain map entries saved for this date.</div>'; return; }
+			list.innerHTML = entries.slice().reverse().map(entry => `
+				<div class="panel" style="padding:18px 20px;margin-bottom:14px;border:1px solid #e7e3df;border-radius:12px;background:#fff">
+					<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px">
+						<div><strong style="display:block;font-size:15px;color:#111315">${sheetEscape(entry.playerName)}</strong><span style="font-size:11px;color:#5f6368;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(entry.region)} · ${sheetEscape(entry.muscle)} · ${sheetEscape(entry.side || 'right')}</span></div>
+						<span style="padding:6px 10px;border-radius:999px;background:#f4f3f1;color:#111315;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">${sheetEscape(entry.date)}</span>
+					</div>
+					<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;font-size:12px;color:#3d4043">
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Severity</strong>${Number(entry.severity || 5)}/10</div>
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Side</strong>${sheetEscape(entry.side || 'right')}</div>
+						<div><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Muscle</strong>${sheetEscape(entry.muscle)}</div>
+					</div>
+					${entry.notes ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid #efeae6;color:#3d4043;font-size:12px"><strong style="display:block;color:#5f6368;font-size:10px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Notes</strong>${sheetEscape(entry.notes)}</div>` : ''}
+				</div>
+			`).join('');
+			if(datePicker){ datePicker.onchange=()=>renderPainMapHistory(); }
+			if(playerSelect){ playerSelect.onchange=()=>renderPainMapHistory(); }
+		}
+		function renderManualWorkoutTable(){
+			if(hasManualWorkoutInputFocus()) return;
+			const table=$('manualWorkoutTable');
+			if(!table) return;
+			if(!Array.isArray(manualWorkoutState.headers) || !manualWorkoutState.headers.length){ manualWorkoutState.headers=[...defaultManualWorkoutHeaders]; }
+			if(!Array.isArray(manualWorkoutState.rows)){ manualWorkoutState.rows=[defaultManualWorkoutRows.map(row=>[...row])]; }
+			const notesField=$('manualWorkoutNotes');
+			if(notesField){
+				manualWorkoutState.notes=manualWorkoutState.notes || '';
+				notesField.value=manualWorkoutState.notes;
+				notesField.onfocus=()=>{ markManualWorkoutTyping(true); };
+				notesField.onblur=()=>{ setTimeout(()=>{ if(!hasManualWorkoutInputFocus()) markManualWorkoutTyping(false); }, 150); };
+				notesField.oninput=()=>{ manualWorkoutState.notes=notesField.value; markManualWorkoutTyping(true); saveManualWorkoutState(); };
+			}
+			const theadRow=table.querySelector('thead tr');
+			const tbody=table.querySelector('tbody');
+			if(!theadRow || !tbody) return;
+			theadRow.innerHTML = manualWorkoutState.headers.map((header,index)=>`<th><input class="manual-workout-header" data-workout-header-index="${index}" type="text" value="${sheetEscape(header)}" spellcheck="false"></th>`).join('');
+			theadRow.querySelectorAll('.manual-workout-header').forEach(input=>{
+				input.onfocus=()=>{ markManualWorkoutTyping(true); };
+				input.onblur=()=>{ setTimeout(()=>{ if(!hasManualWorkoutInputFocus()) markManualWorkoutTyping(false); }, 150); };
+				input.oninput=()=>{
+					const index=Number(input.dataset.workoutHeaderIndex);
+					manualWorkoutState.headers[index]=input.value || defaultManualWorkoutHeaders[index] || 'Custom';
+					markManualWorkoutTyping(true);
+					saveManualWorkoutState();
+				};
+			});
+			tbody.innerHTML = manualWorkoutState.rows.map((row,rowIndex)=>`<tr>${manualWorkoutState.headers.map((_,colIndex)=>{ const value=row[colIndex] ?? ''; const fieldType = colIndex===0 ? 'date' : 'text'; return `<td><input type="${fieldType}" data-workout-row="${rowIndex}" data-workout-col="${colIndex}" value="${sheetEscape(value)}" spellcheck="false"></td>`; }).join('')}</tr>`).join('');
+			tbody.querySelectorAll('input[data-workout-row]').forEach(input=>{
+				input.oninput=()=>{
+					const rowIndex=Number(input.dataset.workoutRow);
+					const colIndex=Number(input.dataset.workoutCol);
+					if(!manualWorkoutState.rows[rowIndex]) manualWorkoutState.rows[rowIndex]=Array(manualWorkoutState.headers.length).fill('');
+					manualWorkoutState.rows[rowIndex][colIndex]=input.value;
+					markManualWorkoutTyping(true);
+					saveManualWorkoutState();
+				};
+				input.onfocus=()=>{ markManualWorkoutTyping(true); };
+				input.onblur=()=>{ setTimeout(()=>{ if(!hasManualWorkoutInputFocus()) markManualWorkoutTyping(false); }, 150); };
+				input.onkeydown = (event) => {
+					if(event.key === 'Tab') return;
+					if(event.key === 'Enter' && input.type === 'date') {
+						event.preventDefault();
+						const next = input.closest('td')?.nextElementSibling?.querySelector('input');
+						if(next) next.focus();
+					}
+				};
+			});
+		}
+		function addRowToTable(table){
+			if(!table) return;
+			const row = Array(manualWorkoutState.headers.length).fill('');
+			if(manualWorkoutState.headers[0]) row[0]=new Date().toISOString().slice(0,10);
+			manualWorkoutState.rows.push(row);
+			saveManualWorkoutState();
+			renderManualWorkoutTable();
+		}
+		function addColumnToTable(table){
+			if(!table) return;
+			ensureManualWorkoutWeightColumns(manualWorkoutState);
+			const weightColumns=manualWorkoutState.headers.filter(header=>/^Set \d+ Weight$/i.test(String(header).trim())).length;
+			manualWorkoutState.headers.push(`Set ${weightColumns + 1} Weight`);
+			manualWorkoutState.rows = manualWorkoutState.rows.map(row => [...row, '']);
+			saveManualWorkoutState();
+			renderManualWorkoutTable();
+		}
+		const manualAddRow=$('manualAddRow'); if(manualAddRow){ manualAddRow.onclick=()=>{ manualGrid.data.push(Array(manualGrid.cols).fill('')); manualGrid.rows=manualGrid.data.length; if(!Array.isArray(manualGrid.headers)) manualGrid.headers=[]; while(manualGrid.headers.length < manualGrid.cols){ manualGrid.headers.push(columnLabel(manualGrid.headers.length)); } saveManualGrid(); renderManual(); notify('Row added.'); }; }
+		const manualAddColumn=$('manualAddColumn'); if(manualAddColumn){ manualAddColumn.onclick=()=>{ manualGrid.cols+=1; manualGrid.headers = Array.from({length:manualGrid.cols},(_,index)=>manualGrid.headers[index] || columnLabel(index)); manualGrid.data=manualGrid.data.map(row=>[...row, '']); saveManualGrid(); renderManual(); notify('Column added.'); }; }
+		const manualMergeCellsBtn=$('manualMergeCells'); if(manualMergeCellsBtn){ manualMergeCellsBtn.onclick=()=>{ if(!manualSelectedCell){ notify('Select a cell first.'); return; } mergeManualSelectedCell(); }; }
+		const manualHighlightCellBtn=$('manualHighlightCell'); if(manualHighlightCellBtn){ manualHighlightCellBtn.onclick=()=>{ if(!manualSelectedCell){ notify('Select a cell first.'); return; } highlightManualSelectedCell(); }; }
+		const manualUnmergeCellsBtn=$('manualUnmergeCells'); if(manualUnmergeCellsBtn){ manualUnmergeCellsBtn.onclick=()=>{ if(!manualSelectedCell){ notify('Select a merged cell first.'); return; } unmergeManualSelectedCell(); }; }
+		const manualWorkoutAddRow=$('manualWorkoutAddRow'); if(manualWorkoutAddRow){ manualWorkoutAddRow.onclick=()=>addRowToTable($('manualWorkoutTable')); }
+		const manualWorkoutAddColumn=$('manualWorkoutAddColumn'); if(manualWorkoutAddColumn){ manualWorkoutAddColumn.onclick=()=>addColumnToTable($('manualWorkoutTable')); }
+		const manualWorkoutSaveHistoryBtn=$('manualWorkoutSaveHistory'); if(manualWorkoutSaveHistoryBtn){ manualWorkoutSaveHistoryBtn.onclick=()=>saveManualWorkoutToHistory(); }
+		const manualWorkoutPlayerSelect=$('manualWorkoutPlayerSelect'); if(manualWorkoutPlayerSelect){ manualWorkoutPlayerSelect.onchange=()=>{ if(isCoach){ localStorage.setItem('smartGymManualWorkoutSelectedPlayer', manualWorkoutPlayerSelect.value); loadManualWorkoutForPlayer(manualWorkoutPlayerSelect.value); } }; }
+		if($('dashboardManualWorkout')) $('dashboardManualWorkout').onclick=()=>showView('manualWorkout');
+		const manualWorkoutClear=$('manualWorkoutClear'); if(manualWorkoutClear){ manualWorkoutClear.onclick=()=>{ manualWorkoutState={ headers:[...defaultManualWorkoutHeaders], rows:[Array(defaultManualWorkoutHeaders.length).fill('')], notes:'' }; saveManualWorkoutState(); renderManualWorkoutTable(); notify('Sheet cleared.'); }; }
+		const manualResetSheet=$('manualResetSheet'); if(manualResetSheet){ manualResetSheet.onclick=()=>{ manualGrid=emptyManualGrid(); manualPages[manualCurrentPage]=manualGrid; saveManualPages(manualCurrentPlayer); renderManual(); notify('Sheet cleared.'); }; }
+		const historyDatePicker=$('historyDatePicker'); if(historyDatePicker){ historyDatePicker.onchange=()=>renderHistoryPage(); }
+		const historyPlayerSelect=$('historyPlayerSelect'); if(historyPlayerSelect){ historyPlayerSelect.onchange=()=>renderHistoryPage(); }
+		renderManualWorkoutTable();
+		const manualAddPage=$('manualAddPage'); if(manualAddPage){ manualAddPage.onclick=()=>{ manualPages.push(emptyManualGrid()); manualCurrentPage=manualPages.length-1; manualGrid=manualPages[manualCurrentPage]; saveManualPages(manualCurrentPlayer); renderManual(); notify('New page added.'); }; }
+		const manualPrevPage=$('manualPrevPage'); if(manualPrevPage){ manualPrevPage.onclick=()=>{ if(manualCurrentPage>0){ manualCurrentPage--; manualGrid=manualPages[manualCurrentPage]; renderManual(); } }; }
+		const manualNextPage=$('manualNextPage'); if(manualNextPage){ manualNextPage.onclick=()=>{ if(manualCurrentPage<manualPages.length-1){ manualCurrentPage++; manualGrid=manualPages[manualCurrentPage]; renderManual(); } }; }
+		const manualPlayerSelect=$('manualPlayerSelect'); if(manualPlayerSelect){ manualPlayerSelect.onchange=()=>{ loadPlayerManualPages(manualPlayerSelect.value); }; }
+		function openEdit(index, member=current){ editingMember=member; editingIndex=index; const item=member.workouts[index]; const setCount=Math.max(1,Number(item.sets)||1); const weights=item.weights || Array(setCount).fill(item.weight || 0); $('editTitle').textContent=item.name; $('editPlanTitle').value=member.planTitle; $('editName').value=item.name; $('editDetail').value=item.detail; $('editSets').value=setCount; $('editReps').value=item.reps; $('editSetWeights').innerHTML=Array.from({length:setCount},(_,setIndex)=>`<label class="set-chip">SET ${setIndex+1}<input class="set-weight" type="number" min="0" value="${weights[setIndex] ?? 0}"></label>`).join(''); $('editWrap').classList.remove('hidden'); }
+		function closeEdit(){ $('editWrap').classList.add('hidden'); } $('closeEdit').onclick=closeEdit; $('cancelEdit').onclick=closeEdit; $('saveEdit').onclick=()=>{ const item=editingMember.workouts[editingIndex]; const setCount=isCoach ? Math.max(1,Number($('editSets').value)||1) : item.sets; const enteredWeights=Array.from(document.querySelectorAll('#editSetWeights .set-weight'),input=>Number(input.value)||0); item.weights=Array.from({length:setCount},(_,index)=>enteredWeights[index] ?? item.weight ?? 0); item.weight=item.weights[0] ?? 0; if(isCoach){ editingMember.planTitle=$('editPlanTitle').value.trim() || editingMember.planTitle; item.name=$('editName').value.trim() || item.name; item.detail=$('editDetail').value.trim() || item.detail; item.sets=setCount; item.reps=Number($('editReps').value); } save(); render(); closeEdit(); notify('Workout changes saved.'); };
+		if($('dashboardAddExercise')) $('dashboardAddExercise').onclick=()=>{ const member=isCoach ? participants.find(item=>item.code === (localStorage.getItem('smartGymDashboardPlayer') || participants[0]?.code)) : current; if(!member) return; member.workouts.push(ensureWorkout({name:'New exercise',detail:'Custom movement',sets:3,reps:10,weight:0,weights:[0,0,0]})); save(); renderDashboardWorkoutEditor(); notify('Exercise added. You can edit each set below.'); };
+		function renderAdmin(){ $('adminContent').innerHTML=`<div class="panel-sub" style="margin-bottom:18px">Coach code: <strong class="code">#${coach.code}</strong></div><table class="admin-table"><thead><tr><th>Member</th><th>Access code</th><th>Plan</th><th>Actions</th></tr></thead><tbody>${participants.map((p,i)=>`<tr><td><b>${p.name}</b></td><td class="code">#${p.code}</td><td>${p.workouts.length} exercises</td><td><button class="edit-btn" data-coach-edit="${i}">Edit plan</button> <button class="danger" data-remove="${i}">Remove</button></td></tr>`).join('')}</tbody></table><h3 style="font-size:22px;margin:28px 0 15px">Add participant</h3><div class="form-grid"><label>Full name<input id="newName" placeholder="e.g. Jordan Lee"></label></div><div class="modal-actions"><button class="primary-btn" id="addMember">Generate member code</button></div><h3 style="font-size:22px;margin:28px 0 15px">Assign workout</h3><div class="form-grid"><label>Participant<select id="assignMember">${participants.map((p,i)=>`<option value="${i}">${p.name} · #${p.code}</option>`).join('')}</select></label><label>Exercise name<input id="assignName" placeholder="e.g. Deadlift"></label><label>Training focus<input id="assignDetail" placeholder="e.g. Back · Compound"></label><label>Sets<input id="assignSets" type="number" min="1" value="3"></label><label>Reps<input id="assignReps" type="number" min="1" value="10"></label><label>Weight (kg)<input id="assignWeight" type="number" min="0" value="0"></label></div><div class="modal-actions"><button class="primary-btn" id="assignWorkout">Add to participant plan</button></div>`; document.querySelectorAll('[data-coach-edit]').forEach(btn=>btn.onclick=()=>{ current=participants[Number(btn.dataset.coachEdit)]; $('modalWrap').classList.add('hidden'); render(); showView('manualWorkout'); }); document.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=async()=>{ const i=Number(btn.dataset.remove); if(confirm('Remove this participant and their workout data?')){participants.splice(i,1); markLocalChange(); persist(storageKey,backupKey,participants); renderAdmin(); syncRemoteState().then(saved=>notify(saved ? 'Participant removed.' : 'Participant removed locally, but could not sync.'));} }); $('addMember').onclick=async()=>{const name=$('newName').value.trim();if(!name){notify('Enter the participant name.');return;}if(participants.some(member=>member.name.toLowerCase()===name.toLowerCase())){notify('That participant already exists.');return;}const code=generateCode();const member={name,code,workouts:[{name:'Barbell Squat',detail:'Legs · Compound',sets:4,reps:8,weight:60}]};ensurePlan(member);participants.push(member);markLocalChange();persist(storageKey,backupKey,participants);renderAdmin();syncRemoteState().then(saved=>notify(saved ? `Participant created. Code: #${code}` : 'Participant created locally, but could not sync.'));}; $('assignWorkout').onclick=()=>{const member=participants[Number($('assignMember').value)],name=$('assignName').value.trim();if(!name){notify('Enter an exercise name.');return;}member.workouts.push({name,detail:$('assignDetail').value.trim() || 'Custom movement',sets:Number($('assignSets').value),reps:Number($('assignReps').value),weight:Number($('assignWeight').value)});save();renderAdmin();notify(`${name} added to ${member.name}'s plan.`);}; }
+		function returnToLogin(){ $('modalWrap').classList.add('hidden'); $('editWrap').classList.add('hidden'); $('app').classList.add('hidden'); $('loginScreen').classList.remove('hidden'); $('loginCode').value=''; current=null; isCoach=false; showView('dashboard'); }
+		$('loginBrand').onclick=returnToLogin; $('appBrand').onclick=returnToLogin; $('loginBrand').style.cursor='pointer'; $('appBrand').style.cursor='pointer'; const originalRenderAdmin=renderAdmin; renderAdmin=()=>{ originalRenderAdmin(); document.querySelectorAll('#adminContent .code, #assignMember option').forEach(element=>{ element.textContent=element.textContent.replace(/#/g,''); }); const oldAssign=$('assignWorkout'); if(oldAssign){ const action=oldAssign.closest('.modal-actions'), form=action?.previousElementSibling, heading=form?.previousElementSibling; action?.remove(); form?.remove(); heading?.remove(); } $('specializedBuilder').classList.remove('hidden'); $('specialMember').innerHTML=participants.map((p,i)=>`<option value="${i}">${p.name} · ${p.code}</option>`).join(''); }; $('adminOpen').onclick=()=>{$('modalWrap').classList.remove('hidden');renderAdmin()}; $('coachManage').onclick=()=>{$('modalWrap').classList.remove('hidden');renderAdmin()}; $('closeModal').onclick=()=>$('modalWrap').classList.add('hidden');
+		$('specialAssign').onclick=()=>{ const member=participants[Number($('specialMember').value)],name=$('specialName').value.trim(); if(!name){notify('Enter an exercise name.');return;} const sets=Number($('specialSets').value)||1; member.workouts.push({name,detail:`${$('specialMuscle').value} · ${$('specialEquipment').value}`,sets,reps:Number($('specialReps').value)||1,weight:Number($('specialWeight').value)||0,day:$('specialDay').value,equipment:$('specialEquipment').value,muscle:$('specialMuscle').value,rest:Number($('specialRest').value)||0,notes:$('specialNotes').value.trim()}); save(); renderAdmin(); $('specialName').value=''; $('specialNotes').value=''; notify(`${name} added to ${member.name}'s specialized plan.`); };
+	</script>
+</body>
+</html>
