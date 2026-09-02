@@ -25,7 +25,8 @@
 		.nav-icon { width:18px; text-align:center; font-size:17px; }
 		.sidebar-bottom { margin-top:auto; border-top:1px solid #292a2b; padding:20px 10px 3px; color:#85888b; font-size:12px; line-height:1.5; }
 		.admin-link { display:block; color:#fff; margin-top:9px; text-decoration:underline; text-decoration-color:var(--red); text-underline-offset:3px; cursor:pointer; }
-		main { grid-column:2; min-width:0; }
+		#app > main { grid-column:2; min-width:0; width:100%; }
+		#app > .sidebar { grid-column:1; }
 		.topbar { height:82px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 clamp(22px,4vw,60px); background:rgba(243,243,241,.88); position:sticky; top:0; z-index:2; backdrop-filter:blur(14px); }
 		.breadcrumb { color:var(--muted); font-size:12px; } .breadcrumb b { color:var(--ink); }
 		.topbar .breadcrumb { display:none; }
