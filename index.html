@@ -27,6 +27,16 @@
 		.admin-link { display:block; color:#fff; margin-top:9px; text-decoration:underline; text-decoration-color:var(--red); text-underline-offset:3px; cursor:pointer; }
 		#app > main { grid-column:2; min-width:0; width:100%; }
 		#app > .sidebar { grid-column:1; }
+		#app.app-shell { display:block; }
+		#app > .sidebar { position:static; width:100%; height:auto; min-height:0; padding:16px 28px; display:flex; flex-direction:row; align-items:center; gap:24px; }
+		#app > .sidebar .brand { margin:0; flex:0 0 auto; }
+		#app > .sidebar .nav-label, #app > .sidebar .sidebar-bottom { display:none; }
+		#app > .sidebar .nav { display:flex; align-items:center; gap:5px; flex:1; overflow-x:auto; scrollbar-width:none; }
+		#app > .sidebar .nav::-webkit-scrollbar { display:none; }
+		#app > .sidebar .nav button { flex:0 0 auto; white-space:nowrap; padding:10px 12px; border-left:0; border-bottom:2px solid transparent; }
+		#app > .sidebar .nav button:hover, #app > .sidebar .nav button.active { border-left-color:transparent; border-bottom-color:var(--red); }
+		#app > main { grid-column:1; }
+		body.manual-view-mode #app > .sidebar { display:none; }
 		.topbar { height:82px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 clamp(22px,4vw,60px); background:rgba(243,243,241,.88); position:sticky; top:0; z-index:2; backdrop-filter:blur(14px); }
 		.breadcrumb { color:var(--muted); font-size:12px; } .breadcrumb b { color:var(--ink); }
 		.topbar .breadcrumb { display:none; }
