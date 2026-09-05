@@ -131,6 +131,7 @@
 		.dashboard-set-weights { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px; padding:8px 0 2px; }
 		.dashboard-set-weights input { width:78px; margin:0; padding:8px; }
 		.dashboard-workout-panel { min-width:0; overflow:hidden; }
+		#manualWorkoutView { display:none !important; }
 		#dashboardView .dashboard-grid { grid-template-columns:minmax(0,1fr); gap:18px; }
 		.dashboard-workout-panel .panel-head { flex-wrap:wrap; }
 		.dashboard-workout-panel .panel-head > div:first-child { min-width:0; flex:1 1 260px; }
@@ -571,7 +572,6 @@ btn.onclick=()=>showView(btn.dataset.navView);
 }
 function renderPageNav(){
 renderPageNavForBar('manualPageNav');
-renderPageNavForBar('manualWorkoutPageNav');
 }
 function updateCoachOnlyNavigation(){
 const isHossam=isCoach && isHossamCoach();
@@ -631,16 +631,15 @@ renderDashboardWorkoutEditor();
 if(activeView !== 'dashboard' && !$(activeView+'View')?.classList.contains('hidden')) showView(activeView);
 }
 function showView(view){
-const validViews=['dashboard','manual','attendance','manualWorkout','coachMembers','painMap','painMapHistory','history'];
+const validViews=['dashboard','manual','attendance','coachMembers','painMap','painMapHistory','history'];
 const isAllowedCoachPage = !((view === 'coachMembers') && !(isCoach && isHossamCoach()));
 const targetView=(validViews.includes(view) && isAllowedCoachPage) ? view : 'dashboard';
 activeView=targetView;
 validViews.forEach(name=>$(name+'View').classList.toggle('hidden',name!==targetView));
 document.querySelectorAll('.nav button').forEach(btn=>btn.classList.toggle('active',btn.dataset.view===targetView));
-			$('crumb').textContent=targetView==='manual' ? 'Manual System' : targetView==='attendance' ? 'Attendance' : targetView==='manualWorkout' ? 'Manual Workout' : targetView==='coachMembers' ? 'Add Member' : targetView==='painMap' ? 'Body PainMap' : targetView==='painMapHistory' ? 'PainMap History' : targetView==='history' ? 'History' : 'Overview';
-document.body.classList.toggle('manual-view-mode', targetView === 'manual' || targetView === 'manualWorkout');
+			$('crumb').textContent=targetView==='manual' ? 'Manual System' : targetView==='attendance' ? 'Attendance' : targetView==='coachMembers' ? 'Add Member' : targetView==='painMap' ? 'Body PainMap' : targetView==='painMapHistory' ? 'PainMap History' : targetView==='history' ? 'History' : 'Overview';
+document.body.classList.toggle('manual-view-mode', targetView === 'manual');
 if(targetView==='manual'){ const playerSelect=$('manualPlayerSelect'); if(playerSelect){ if(isCoach){ playerSelect.parentElement.style.display='block'; playerSelect.innerHTML=participants.map(p=>`<option value="${p.code}">${p.name}</option>`).join(''); playerSelect.value=manualCurrentPlayer || (participants.length>0 ? participants[0].code : ''); loadPlayerManualPages(playerSelect.value); } else { playerSelect.parentElement.style.display='none'; loadPlayerManualPages(current.code); } } else if(!isCoach){ loadPlayerManualPages(current.code); } }
-		if(targetView==='manualWorkout'){ const playerField=$('manualWorkoutPlayerField'); const playerSelect=$('manualWorkoutPlayerSelect'); if(playerField){ playerField.style.display = isCoach ? 'flex' : 'none'; } if(playerSelect){ if(isCoach){ playerSelect.innerHTML = participants.map(member => `<option value="${member.code}">${sheetEscape(member.name)}</option>`).join(''); const storedValue = localStorage.getItem('smartGymManualWorkoutSelectedPlayer') || localStorage.getItem('smartGymHistorySelectedPlayer') || participants[0]?.code || current?.code || ''; playerSelect.value = participants.some(member => member.code === storedValue) ? storedValue : (participants[0]?.code || current?.code || ''); if(playerSelect.value){ localStorage.setItem('smartGymManualWorkoutSelectedPlayer', playerSelect.value); localStorage.setItem('smartGymHistorySelectedPlayer', playerSelect.value); } playerSelect.onchange = () => { localStorage.setItem('smartGymManualWorkoutSelectedPlayer', playerSelect.value); localStorage.setItem('smartGymHistorySelectedPlayer', playerSelect.value); loadManualWorkoutForPlayer(playerSelect.value); }; } else { playerSelect.innerHTML = `<option value="${current?.code || ''}">${sheetEscape(current?.name || 'Current player')}</option>`; playerSelect.value = current?.code || ''; playerSelect.onchange = null; } } loadManualWorkoutForPlayer(isCoach ? playerSelect?.value : current?.code); renderPageNav(); }
 if(targetView==='coachMembers'){ renderCoachMemberPage(); }
 if(targetView==='painMap'){ renderPainMapUI(); }
 if(targetView==='painMapHistory'){ renderPainMapHistory(); }
