@@ -749,16 +749,17 @@ function normalizeCode(value){ const digits=String(value ?? '').replace(/\D/g,''
 		}
 		let dashboardWorkoutSaveTimer=null;
 		const dashboardDrafts={}; const cloneDashboardWorkouts=workouts=>(Array.isArray(workouts) ? workouts : []).map(item=>ensureWorkout({...item,weights:Array.isArray(item.weights) ? [...item.weights] : item.weights})); const getDashboardDraft=member=>{ if(!member?.code) return []; if(!dashboardDrafts[member.code]) dashboardDrafts[member.code]=cloneDashboardWorkouts(member.workouts); return dashboardDrafts[member.code]; };
-		function postDashboardWorkout(member){
+		async function postDashboardWorkout(member){
 			if(!member) return;
 			const draft=getDashboardDraft(member);
 			member.workouts=cloneDashboardWorkouts(draft);
 			saveDashboardLocal(member);
 			markLocalChange();
 			persist(storageKey,backupKey,participants);
-			queueRemoteSync();
-			if($('dashboardWorkoutSaveStatus')) $('dashboardWorkoutSaveStatus').textContent='Posted';
-			notify(`${member.name}'s workout posted and synced.`);
+			if($('dashboardWorkoutSaveStatus')) $('dashboardWorkoutSaveStatus').textContent='Syncing...';
+			const synced=await syncRemoteState();
+			if($('dashboardWorkoutSaveStatus')) $('dashboardWorkoutSaveStatus').textContent=synced ? 'Posted' : 'Saved locally';
+			notify(synced ? `${member.name}'s workout posted and synced.` : `${member.name}'s workout was saved locally; database sync is pending.`);
 		}
 		async function saveDashboardWorkoutToHistory(member, date, workouts=member?.workouts){
 			if(!member) return;
